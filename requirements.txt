@@ -1,0 +1,3 @@
+# MindScapeS Frontier Talk Series 2026
+# Built using Python standard library (http.server, socketserver, json, csv, urllib)
+# No external pip dependencies required.
