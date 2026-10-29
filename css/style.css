@@ -462,7 +462,7 @@ main {
 
 .person-photo-wrap {
   width: 100%;
-  aspect-ratio: 4 / 3.4;
+  aspect-ratio: 4 / 4.8;
   overflow: hidden;
   background: #f0eee9;
   border-bottom: 1px solid var(--border-color);
@@ -923,7 +923,7 @@ input:focus, select:focus, textarea:focus {
   }
 
   .person-photo-wrap {
-    aspect-ratio: 16 / 11;
+    aspect-ratio: 4 / 4.8;
   }
 
   .person-content {
@@ -973,3 +973,4 @@ input:focus, select:focus, textarea:focus {
     font-size: 1.05rem;
   }
 }
+
