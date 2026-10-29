@@ -39,7 +39,6 @@
   var regFormWrap = document.getElementById('reg-form-wrap');
   var regConfirmWrap = document.getElementById('reg-confirm-wrap');
   var regConfirmDetails = document.getElementById('reg-confirm-details');
-  var btnEditReg = document.getElementById('btn-edit-reg');
 
   // Populate from localStorage if user previously registered
   var savedReg = localStorage.getItem('mindscapes_registration');
@@ -140,10 +139,5 @@
     });
   }
 
-  if (btnEditReg) {
-    btnEditReg.addEventListener('click', function () {
-      if (regConfirmWrap) regConfirmWrap.style.display = 'none';
-      if (regFormWrap) regFormWrap.style.display = 'block';
-    });
-  }
+
 })();
