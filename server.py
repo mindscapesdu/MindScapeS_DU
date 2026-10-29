@@ -1,4 +1,4 @@
-"""
+﻿"""
 MindScapeS Frontier Talk Series 2026 - Local Server & CSV Sync Handler
 Provides static file serving and handles POST /api/register to automatically
 save and update registrations in CSV/registrations.csv.
@@ -95,6 +95,14 @@ def save_or_update_csv(data):
     return new_entry
 
 class MindScapeSHandler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        # Route /Session_1/ requests to root seamlessly
+        if self.path.startswith('/Session_1/'):
+            self.path = self.path[len('/Session_1'):]
+        elif self.path == '/Session_1':
+            self.path = '/'
+        return super().do_GET()
+
     def end_headers(self):
         # Enable CORS for local testing
         self.send_header('Access-Control-Allow-Origin', '*')
@@ -139,3 +147,4 @@ if __name__ == '__main__':
             httpd.serve_forever()
         except KeyboardInterrupt:
             print("\nServer stopped.")
+
