@@ -130,7 +130,7 @@
           '<p><strong>Email ID:</strong> ' + escapeHtml(regData.email) + '</p>' +
           '<p><strong>Affiliation:</strong> ' + escapeHtml(regData.affiliation || '(Not specified)') + '</p>' +
           '<p><strong>Academic Status:</strong> ' + escapeHtml(regData.academic_status || '(Not specified)') + '</p>' +
-          '<p><strong>Session:</strong> Friday, October 30, 2026 • 6:30 PM IST (Prof. Melissa Kibbe)</p>' +
+          '<p><strong>Session:</strong> Friday, October 30, 2026 • 6:30 PM IST (Prof. Melissa M Kibbe)</p>' +
           (regData.remarks ? '<p><strong>Remarks:</strong> ' + escapeHtml(regData.remarks) + '</p>' : '');
       }
 
