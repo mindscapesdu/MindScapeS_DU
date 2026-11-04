@@ -440,39 +440,104 @@
   // ===== Dynamic Speakers Page & Spotlight Hydration =====
   function initDynamicVisuals() {
     function applyData(talks) {
-      if (!Array.isArray(talks)) return;
-      talks.forEach(function (talk) {
-        // 1. Hydrate speakers.html profile cards
-        var speakerCards = document.querySelectorAll('.speaker-profile-card');
-        speakerCards.forEach(function (card) {
-          var nameEl = card.querySelector('.speaker-name');
-          if (nameEl && talk.speaker_name) {
-            var plainTalkName = talk.speaker_name.toLowerCase().replace(/^(prof\.|dr\.|ms\.|mr\.)\s*/i, '').trim();
-            var plainCardName = nameEl.textContent.toLowerCase().replace(/^(prof\.|dr\.|ms\.|mr\.)\s*/i, '').trim();
-            if (plainCardName.includes(plainTalkName) || plainTalkName.includes(plainCardName)) {
-              var avatarWrap = card.querySelector('.speaker-avatar-wrap');
-              if (avatarWrap && talk.speaker_image) {
-                avatarWrap.innerHTML = '<img src="' + escapeHtml(talk.speaker_image) + '" alt="' + escapeHtml(talk.speaker_name) + '" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; object-position: center 20%;">';
-              }
-              if (talk.speaker_affiliation) {
-                var affilEl = card.querySelector('.speaker-affiliation');
-                if (affilEl && talk.speaker_affiliation && !affilEl.textContent.includes(talk.speaker_affiliation)) {
-                  affilEl.textContent = talk.speaker_affiliation;
-                }
-              }
+      if (!Array.isArray(talks) || talks.length === 0) return;
+
+      // 1. Dynamic Homepage Spotlight Card (index.html)
+      var spotlightCard = document.querySelector('.spotlight-card');
+      if (spotlightCard) {
+        var activeTalk = talks.find(function(t) { return t.status === 'active'; }) ||
+                         talks.find(function(t) { return t.has_register; }) ||
+                         talks[0];
+
+        if (activeTalk) {
+          var badgeEl = spotlightCard.querySelector('.spotlight-badge');
+          if (badgeEl) badgeEl.innerHTML = (activeTalk.status === 'active' ? 'Active' : 'Upcoming') + ' &bull; Session ' + (activeTalk.session_number || '');
+
+          var timeEl = spotlightCard.querySelector('.spotlight-time');
+          if (timeEl) timeEl.textContent = activeTalk.date_display + ' • Starts at ' + (activeTalk.time_display || '').replace(/\n/g, ' ');
+
+          var titleLink = spotlightCard.querySelector('.spotlight-title a');
+          if (titleLink) {
+            titleLink.textContent = activeTalk.title;
+            titleLink.href = 'schedule.html#session-' + (activeTalk.session_number || '');
+          }
+
+          var speakerEl = spotlightCard.querySelector('.spotlight-speaker');
+          if (speakerEl) speakerEl.textContent = activeTalk.speaker_name;
+
+          var affilEl = spotlightCard.querySelector('.spotlight-affil');
+          if (affilEl) affilEl.textContent = activeTalk.speaker_affiliation || '';
+
+          var spotPhoto = document.getElementById('spotlight-speaker-photo');
+          if (spotPhoto) {
+            if (activeTalk.speaker_image) {
+              spotPhoto.src = activeTalk.speaker_image;
+              spotPhoto.style.display = 'block';
+            } else {
+              spotPhoto.style.display = 'none';
             }
           }
-        });
 
-        // 2. Hydrate index.html spotlight if session-2
-        if (talk.id === 'session-2' || talk.session_number === 2) {
-          var spotPhoto = document.getElementById('spotlight-speaker-photo');
-          if (spotPhoto && talk.speaker_image) {
-            spotPhoto.src = talk.speaker_image;
-            spotPhoto.style.display = 'block';
+          var abstractEl = spotlightCard.querySelector('.abstract-content');
+          if (abstractEl && activeTalk.abstract) {
+            var paras = activeTalk.abstract.split('\n\n').filter(function(p) { return p.trim().length > 0; });
+            abstractEl.innerHTML = paras.map(function(p, i) {
+              return '<p>' + (i === 0 ? '<strong>Abstract:</strong> ' : '') + escapeHtml(p) + '</p>';
+            }).join('');
+          }
+
+          var actionsEl = spotlightCard.querySelector('.spotlight-actions');
+          if (actionsEl) {
+            var btns = [];
+            if (activeTalk.has_register || activeTalk.status === 'active') {
+              btns.push('<a href="schedule.html#register" class="btn btn-gold">Register for Session ' + (activeTalk.session_number || '') + '</a>');
+            }
+            if (activeTalk.reading_url) {
+              btns.push('<a href="' + escapeHtml(activeTalk.reading_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Download Prep Reading (PDF)</a>');
+            }
+            btns.push('<a href="schedule.html" class="btn btn-secondary">View Full Schedule &rarr;</a>');
+            actionsEl.innerHTML = btns.join(' ');
           }
         }
-      });
+      }
+
+      // 2. Dynamic Keynote Speakers Grid (speakers.html)
+      var speakersGrid = document.querySelector('.speakers-grid');
+      if (speakersGrid && document.querySelector('.page-hero-title')?.textContent.includes('Speakers')) {
+        var sorted = [...talks].sort(function(a, b) { return (a.session_number || 0) - (b.session_number || 0); });
+        var gridHtml = '';
+        sorted.forEach(function(talk) {
+          var initials = (talk.speaker_name || '')
+            .replace(/^(prof\.|dr\.|ms\.|mr\.)\s*/i, '')
+            .split(' ')
+            .filter(Boolean)
+            .map(w => w[0])
+            .slice(0, 2)
+            .join('')
+            .toUpperCase() || 'SP';
+
+          var avatarHtml = talk.speaker_image
+            ? '<img src="' + escapeHtml(talk.speaker_image) + '" alt="' + escapeHtml(talk.speaker_name) + '" loading="lazy">'
+            : '<div class="speaker-monogram">' + initials + '</div>';
+
+          var roleLabel = 'Speaker &bull; Session ' + (talk.session_number || '');
+          if (talk.date_display) roleLabel += ' (' + escapeHtml(talk.date_display) + ')';
+
+          gridHtml += '<article class="speaker-profile-card">' +
+            '<div class="speaker-avatar-wrap">' + avatarHtml + '</div>' +
+            '<div class="speaker-card-body">' +
+              '<span class="speaker-role-pill">' + roleLabel + '</span>' +
+              '<h3 class="speaker-name">' + escapeHtml(talk.speaker_name) + '</h3>' +
+              '<div class="speaker-affiliation">' + escapeHtml(talk.speaker_affiliation || '') + '</div>' +
+              '<div class="speaker-talk-topic" style="margin-top: 0.85rem;">' +
+                '<strong>Talk:</strong> <em>' + escapeHtml(talk.title || '') + '</em>' +
+              '</div>' +
+              (talk.abstract ? '<p class="subtext" style="margin-top: 0.75rem; font-size: 0.88rem; line-height: 1.5;">' + escapeHtml(talk.abstract.substring(0, 160)) + '...</p>' : '') +
+            '</div>' +
+          '</article>';
+        });
+        speakersGrid.innerHTML = gridHtml;
+      }
     }
 
     var cached = localStorage.getItem('mindscapes_talks');
@@ -481,7 +546,7 @@
     }
 
     if (SUPABASE_CONFIG.url) {
-      fetch(SUPABASE_CONFIG.url + '/rest/v1/talks?select=*', {
+      fetch(SUPABASE_CONFIG.url + '/rest/v1/talks?select=*&order=session_number.asc', {
         headers: {
           'apikey': SUPABASE_CONFIG.anonKey,
           'Authorization': 'Bearer ' + SUPABASE_CONFIG.anonKey
@@ -489,7 +554,10 @@
       }).then(function (res) {
         if (res.ok) return res.json();
       }).then(function (remoteTalks) {
-        if (Array.isArray(remoteTalks)) applyData(remoteTalks);
+        if (Array.isArray(remoteTalks) && remoteTalks.length > 0) {
+          localStorage.setItem('mindscapes_talks', JSON.stringify(remoteTalks));
+          applyData(remoteTalks);
+        }
       }).catch(function (err) {
         console.log('Visual sync note:', err);
       });
