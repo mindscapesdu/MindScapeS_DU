@@ -923,14 +923,19 @@
           <textarea id="edit-talk-abstract" class="field-input-admin" rows="5" placeholder="Enter full abstract paragraphs..."></textarea>
         </div>
 
-        <div class="form-grid-row-2" style="margin-top: 1rem;">
-          <div>
-            <label for="edit-reading-title" class="field-label-admin">Reading Document Title</label>
-            <input type="text" id="edit-reading-title" class="field-input-admin" placeholder="e.g. The Flexibility and Stability of Perspectives">
+        <div style="margin-top: 1rem;">
+          <label for="edit-reading-title" class="field-label-admin">Reading Document Title</label>
+          <input type="text" id="edit-reading-title" class="field-input-admin" placeholder="e.g. The Flexibility and Stability of Perspectives">
+        </div>
+
+        <div style="margin-top: 1rem;">
+          <label class="field-label-admin">Reading Material (Upload PDF file or enter external URL/path)</label>
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <input type="text" id="edit-reading-url" class="field-input-admin" style="flex: 2;" placeholder="e.g. Papers and Handouts/... or https://...">
+            <input type="file" id="edit-reading-file" accept="application/pdf" class="field-input-admin" style="flex: 1;">
           </div>
-          <div>
-            <label for="edit-reading-url" class="field-label-admin">Reading PDF / Document URL</label>
-            <input type="text" id="edit-reading-url" class="field-input-admin" placeholder="e.g. Papers and Handouts/...pdf or external link">
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-top: 0.5rem;">
+            <span id="reading-file-status" style="font-size: 0.82rem; color: #64748b;">No PDF file selected</span>
           </div>
         </div>
 
@@ -1416,6 +1421,52 @@
       }
     });
 
+    var readingFileInput = document.getElementById('edit-reading-file');
+    var readingUrlInput = document.getElementById('edit-reading-url');
+    var readingFileStatus = document.getElementById('reading-file-status');
+
+    if (readingFileInput) {
+      readingFileInput.addEventListener('change', async function () {
+        var file = this.files[0];
+        if (!file) return;
+
+        readingFileStatus.textContent = 'Processing ' + file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)...';
+
+        // 1. Try uploading to Supabase Storage bucket 'readings'
+        try {
+          var cleanFileName = Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+          var uploadRes = await fetch(`${SUPABASE_CONFIG.url}/storage/v1/object/readings/${cleanFileName}`, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_CONFIG.anonKey,
+              'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+              'Content-Type': 'application/pdf'
+            },
+            body: file
+          });
+
+          if (uploadRes.ok) {
+            var publicUrl = `${SUPABASE_CONFIG.url}/storage/v1/object/public/readings/${cleanFileName}`;
+            readingUrlInput.value = publicUrl;
+            readingFileStatus.textContent = 'Uploaded to Cloud Storage: ' + file.name;
+            showAdminToast('PDF uploaded to Supabase Storage!');
+            return;
+          }
+        } catch (err) {
+          console.log('Supabase storage attempt note:', err);
+        }
+
+        // 2. Base64 fallback (works everywhere with zero configuration)
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          readingUrlInput.value = e.target.result;
+          readingFileStatus.textContent = 'Ready to save (' + (file.size / 1024).toFixed(1) + ' KB): ' + file.name;
+          showAdminToast('PDF processed and ready to save!');
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
     function openTalkEditor(talkId) {
       var talk = allTalks.find(t => t.id === talkId);
       if (!talk) return;
@@ -1435,6 +1486,8 @@
       document.getElementById('edit-talk-abstract').value = talk.abstract || '';
       document.getElementById('edit-reading-title').value = talk.reading_title || '';
       document.getElementById('edit-reading-url').value = talk.reading_url || '';
+      if (readingFileInput) readingFileInput.value = '';
+      if (readingFileStatus) readingFileStatus.textContent = talk.reading_url ? 'Active reading link attached' : 'No PDF file selected';
       document.getElementById('edit-zoom-link').value = talk.zoom_link || '';
       document.getElementById('edit-zoom-meeting-id').value = talk.zoom_meeting_id || '';
       document.getElementById('edit-zoom-passcode').value = talk.zoom_passcode || '';
@@ -1463,6 +1516,8 @@
       document.getElementById('edit-talk-abstract').value = '';
       document.getElementById('edit-reading-title').value = '';
       document.getElementById('edit-reading-url').value = '';
+      if (readingFileInput) readingFileInput.value = '';
+      if (readingFileStatus) readingFileStatus.textContent = 'No PDF file selected';
       document.getElementById('edit-zoom-link').value = '';
       document.getElementById('edit-zoom-meeting-id').value = '';
       document.getElementById('edit-zoom-passcode').value = '';

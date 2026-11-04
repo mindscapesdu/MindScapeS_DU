@@ -437,7 +437,67 @@
     }
   }
 
+  // ===== Dynamic Speakers Page & Spotlight Hydration =====
+  function initDynamicVisuals() {
+    function applyData(talks) {
+      if (!Array.isArray(talks)) return;
+      talks.forEach(function (talk) {
+        // 1. Hydrate speakers.html profile cards
+        var speakerCards = document.querySelectorAll('.speaker-profile-card');
+        speakerCards.forEach(function (card) {
+          var nameEl = card.querySelector('.speaker-name');
+          if (nameEl && talk.speaker_name) {
+            var plainTalkName = talk.speaker_name.toLowerCase().replace(/^(prof\.|dr\.|ms\.|mr\.)\s*/i, '').trim();
+            var plainCardName = nameEl.textContent.toLowerCase().replace(/^(prof\.|dr\.|ms\.|mr\.)\s*/i, '').trim();
+            if (plainCardName.includes(plainTalkName) || plainTalkName.includes(plainCardName)) {
+              var avatarWrap = card.querySelector('.speaker-avatar-wrap');
+              if (avatarWrap && talk.speaker_image) {
+                avatarWrap.innerHTML = '<img src="' + escapeHtml(talk.speaker_image) + '" alt="' + escapeHtml(talk.speaker_name) + '" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; object-position: center 20%;">';
+              }
+              if (talk.speaker_affiliation) {
+                var affilEl = card.querySelector('.speaker-affiliation');
+                if (affilEl && talk.speaker_affiliation && !affilEl.textContent.includes(talk.speaker_affiliation)) {
+                  affilEl.textContent = talk.speaker_affiliation;
+                }
+              }
+            }
+          }
+        });
+
+        // 2. Hydrate index.html spotlight if session-2
+        if (talk.id === 'session-2' || talk.session_number === 2) {
+          var spotPhoto = document.getElementById('spotlight-speaker-photo');
+          if (spotPhoto && talk.speaker_image) {
+            spotPhoto.src = talk.speaker_image;
+            spotPhoto.style.display = 'block';
+          }
+        }
+      });
+    }
+
+    var cached = localStorage.getItem('mindscapes_talks');
+    if (cached) {
+      try { applyData(JSON.parse(cached)); } catch (e) {}
+    }
+
+    if (SUPABASE_CONFIG.url) {
+      fetch(SUPABASE_CONFIG.url + '/rest/v1/talks?select=*', {
+        headers: {
+          'apikey': SUPABASE_CONFIG.anonKey,
+          'Authorization': 'Bearer ' + SUPABASE_CONFIG.anonKey
+        }
+      }).then(function (res) {
+        if (res.ok) return res.json();
+      }).then(function (remoteTalks) {
+        if (Array.isArray(remoteTalks)) applyData(remoteTalks);
+      }).catch(function (err) {
+        console.log('Visual sync note:', err);
+      });
+    }
+  }
+
   // Bind initial modal triggers & dynamic schedule
   bindModalEvents();
   initDynamicSchedule();
+  initDynamicVisuals();
 })();
