@@ -51,30 +51,21 @@
   var regConfirmWrap = document.getElementById('reg-confirm-wrap');
   var regConfirmDetails = document.getElementById('reg-confirm-details');
 
-  // Populate form from localStorage if user previously filled details
-  var savedReg = localStorage.getItem('mindscapes_registration');
-  if (savedReg && regForm) {
-    try {
-      var data = JSON.parse(savedReg);
-      if (data.name && document.getElementById('reg-name')) document.getElementById('reg-name').value = data.name;
-      if (data.email && document.getElementById('reg-email')) document.getElementById('reg-email').value = data.email;
-      if (data.affiliation && document.getElementById('reg-affiliation')) document.getElementById('reg-affiliation').value = data.affiliation;
-      if (data.academic_status && document.getElementById('reg-status')) document.getElementById('reg-status').value = data.academic_status;
-      if (data.remarks && document.getElementById('reg-remarks')) document.getElementById('reg-remarks').value = data.remarks;
-    } catch (e) {
-      console.warn('LocalStorage parse exception:', e);
-    }
-  }
+  // Clear any past registration info from browser storage to ensure privacy & clean forms
+  try {
+    localStorage.removeItem('mindscapes_registration');
+    localStorage.removeItem('mindscapes_reg_id');
+  } catch (e) {}
 
   if (regForm) {
     regForm.addEventListener('submit', function (e) {
       e.preventDefault();
 
-      var existingId = localStorage.getItem('mindscapes_reg_id') || ('reg_' + Date.now());
+      var regId = 'reg_' + Date.now();
       var selectedSession = document.getElementById('reg-session') ? document.getElementById('reg-session').value : 'Nov 6 - Schellenberg (Session 2)';
 
       var regData = {
-        id: existingId,
+        id: regId,
         name: document.getElementById('reg-name').value.trim(),
         email: document.getElementById('reg-email').value.trim(),
         affiliation: document.getElementById('reg-affiliation') ? document.getElementById('reg-affiliation').value.trim() : '',
@@ -83,11 +74,7 @@
         remarks: document.getElementById('reg-remarks') ? document.getElementById('reg-remarks').value.trim() : ''
       };
 
-      // 1. Cache to LocalStorage
-      localStorage.setItem('mindscapes_reg_id', regData.id);
-      localStorage.setItem('mindscapes_registration', JSON.stringify(regData));
-
-      // 2. Local / Render Backend CSV sync
+      // 1. Local / Render Backend CSV sync
       fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -512,7 +499,7 @@
       }
 
       // 2. Dynamic Keynote Speakers Grid (speakers.html)
-      var speakersGrid = document.querySelector('.speakers-grid');
+      var speakersGrid = document.getElementById('keynote-speakers-grid') || document.querySelector('.speakers-grid');
       if (speakersGrid && document.querySelector('.page-hero-title')?.textContent.includes('Speakers')) {
         var sorted = [...talks].sort(function(a, b) { return (a.session_number || 0) - (b.session_number || 0); });
         var gridHtml = '';
@@ -547,6 +534,88 @@
           '</article>';
         });
         speakersGrid.innerHTML = gridHtml;
+      }
+
+      // 2b. Dynamic Commentators Grid (speakers.html)
+      var commentatorsGrid = document.getElementById('commentators-grid');
+      if (commentatorsGrid) {
+        var commData = null;
+        try {
+          var commRaw = localStorage.getItem('mindscapes_commentators');
+          if (commRaw) commData = JSON.parse(commRaw);
+        } catch (e) {}
+
+        if (!Array.isArray(commData) || commData.length === 0) {
+          commData = [
+            {
+              id: 'comm-1',
+              name: 'Prof. Sami Yousif',
+              affiliation: 'The Ohio State University, USA \u2022 Department of Psychology',
+              image: 'Images/sami-yousif.jpeg',
+              role_pill: 'Commentator \u2022 Session 1',
+              topic: "Commentary on Prof. Melissa Kibbe's colloquium on infant object representation.",
+              bio: 'Sami Yousif explores spatial cognition, perceptual grouping, numerical representation, and how cognitive systems organize complex visual and mental information across development.'
+            },
+            {
+              id: 'comm-2',
+              name: 'Prof. Tarun',
+              affiliation: 'University of Delhi, India \u2022 Department of Philosophy',
+              image: '',
+              role_pill: 'Commentator \u2022 Session 2',
+              topic: "Commentary on Prof. Susanna Schellenberg's colloquium on mental evidence and perceptual capacities.",
+              bio: 'Specializes in Indian epistemology, phenomenology, philosophy of mind, and cognitive science interfaces.'
+            }
+          ];
+        }
+
+        var commHtml = '';
+        commData.forEach(function (comm) {
+          var initials = (comm.name || '')
+            .replace(/^(prof\.|dr\.|ms\.|mr\.)\s*/i, '')
+            .split(' ')
+            .filter(Boolean)
+            .map(w => w[0])
+            .slice(0, 2)
+            .join('')
+            .toUpperCase() || 'CM';
+
+          var avatarHtml = comm.image
+            ? '<img src="' + escapeHtml(comm.image) + '" alt="' + escapeHtml(comm.name) + '" loading="lazy">'
+            : '<div class="speaker-monogram" style="background: #92400e;">' + initials + '</div>';
+
+          commHtml += '<article class="speaker-profile-card">' +
+            '<div class="speaker-avatar-wrap">' + avatarHtml + '</div>' +
+            '<div class="speaker-card-body">' +
+              '<span class="speaker-role-pill commentator">' + (comm.role_pill || 'Commentator') + '</span>' +
+              '<h3 class="speaker-name">' + escapeHtml(comm.name) + '</h3>' +
+              '<div class="speaker-affiliation">' + (comm.affiliation || '') + '</div>' +
+              (comm.bio ? '<p class="subtext" style="margin-bottom: 1.15rem;">' + escapeHtml(comm.bio) + '</p>' : '') +
+              (comm.topic ? '<div class="speaker-talk-topic" style="border-left-color: #92400e;"><strong>Commentary on:</strong> ' + escapeHtml(comm.topic) + '</div>' : '') +
+            '</div>' +
+          '</article>';
+        });
+        commentatorsGrid.innerHTML = commHtml;
+      }
+
+      // 3. Dynamic Upcoming Archival Banner (archive.html)
+      initDynamicArchive(talks);
+    }
+
+    // Function to dynamically update Archive Upcoming Banner
+    function initDynamicArchive(talks) {
+      var banner = document.getElementById('archive-upcoming-banner');
+      if (!banner || !Array.isArray(talks)) return;
+
+      var sorted = [...talks].sort(function (a, b) { return (a.session_number || 0) - (b.session_number || 0); });
+      var nextSession = sorted.find(function (t) { return t.status === 'active' || t.status === 'upcoming'; });
+
+      if (nextSession) {
+        banner.innerHTML = '<strong>Upcoming Archival:</strong> Session ' + (nextSession.session_number || '') +
+          ' with <strong>' + escapeHtml(nextSession.speaker_name) + '</strong> (<em>' + escapeHtml(nextSession.title) + '</em>)' +
+          ' is scheduled for <strong>' + escapeHtml(nextSession.date_display) + (nextSession.time_display ? ' at ' + escapeHtml(nextSession.time_display) : '') + '</strong>.' +
+          ' Following the live session, discussion records and materials will be indexed here.';
+      } else {
+        banner.innerHTML = '<strong>Series Complete:</strong> All sessions from the current colloquium cycle are indexed above. Discussion records, video archives, and seminar materials are permanently preserved.';
       }
     }
 

@@ -858,21 +858,39 @@
       </div>
     </div>
 
-    <!-- ==================== TAB 2: SPEAKER PROFILE CARDS ==================== -->
+    <!-- ==================== TAB 2: SPEAKER & COMMENTATOR PROFILE CARDS ==================== -->
     <div class="tab-content-panel" id="tab-speakers">
       <div class="section-title-bar">
         <div>
-          <h2 class="admin-section-heading">Speaker Profile Cards Directory</h2>
+          <h2 class="admin-section-heading">Speaker &amp; Commentator Profile Cards</h2>
           <p class="admin-section-sub">
-            Customize speaker photos, research biographies, academic affiliations, and talk topics shown on the public Speakers page and throughout the website.
+            Customize photos, research biographies, academic affiliations, and topics shown on the public Speakers page.
           </p>
         </div>
-        <div style="display: flex; gap: 0.75rem;">
-          <input type="text" id="admin-speaker-search" class="search-input-admin" placeholder="Filter speakers..." style="width: 250px;">
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+          <input type="text" id="admin-speaker-search" class="search-input-admin" placeholder="Filter profiles..." style="width: 220px;">
+          <button type="button" class="btn btn-gold" id="btn-add-commentator" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+            + Add New Commentator
+          </button>
         </div>
       </div>
 
+      <div style="display: flex; gap: 0.5rem; margin-top: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;">
+        <button type="button" class="filter-btn-pill active" id="pill-filter-keynotes" data-spk-tab="keynotes">
+          Keynote Speakers (8)
+        </button>
+        <button type="button" class="filter-btn-pill" id="pill-filter-commentators" data-spk-tab="commentators">
+          Commentators &amp; Discussants (<span id="count-commentators">2</span>)
+        </button>
+      </div>
+
+      <!-- Keynote Speakers Grid -->
       <div class="admin-speaker-cards-grid" id="admin-speaker-cards-container">
+        <!-- Rendered dynamically by JavaScript -->
+      </div>
+
+      <!-- Commentators Grid -->
+      <div class="admin-speaker-cards-grid" id="admin-commentator-cards-container" style="display: none;">
         <!-- Rendered dynamically by JavaScript -->
       </div>
     </div>
@@ -1013,19 +1031,38 @@
           <textarea id="edit-talk-abstract" class="field-input-admin" rows="5" placeholder="Enter full abstract paragraphs..."></textarea>
         </div>
 
-        <div style="margin-top: 1rem;">
-          <label for="edit-reading-title" class="field-label-admin">Reading Document Title</label>
-          <input type="text" id="edit-reading-title" class="field-input-admin" placeholder="e.g. The Flexibility and Stability of Perspectives">
-        </div>
+        <!-- Materials Section: Paper & Handout Separated -->
+        <div style="margin-top: 1.25rem; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 6px; padding: 1.15rem;">
+          <h4 style="margin: 0 0 0.85rem; font-family: var(--font-sans); font-size: 0.95rem; color: #92400e; display: flex; align-items: center; gap: 0.5rem;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <span>Preparatory Research Paper &amp; Session Handouts</span>
+          </h4>
 
-        <div style="margin-top: 1rem;">
-          <label class="field-label-admin">Reading Material (Upload PDF file or enter external URL/path)</label>
-          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-            <input type="text" id="edit-reading-url" class="field-input-admin" style="flex: 2;" placeholder="e.g. Papers and Handouts/... or https://...">
-            <input type="file" id="edit-reading-file" accept="application/pdf" class="field-input-admin" style="flex: 1;">
+          <!-- Option 1: Research Paper -->
+          <div style="margin-bottom: 1.15rem;">
+            <label for="edit-paper-title" class="field-label-admin">1. Preparatory Research Paper Title</label>
+            <input type="text" id="edit-paper-title" class="field-input-admin" placeholder="e.g. The Flexibility and Stability of Perspectives (Aristotelian Society)">
+            <label class="field-label-admin" style="margin-top: 0.5rem;">Research Paper PDF (Choose PDF File or enter URL/path)</label>
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+              <input type="text" id="edit-paper-url" class="field-input-admin" style="flex: 2;" placeholder="e.g. Papers and Handouts/... or https://...">
+              <input type="file" id="edit-paper-file" accept="application/pdf" class="field-input-admin" style="flex: 1;">
+            </div>
+            <div style="font-size: 0.8rem; color: #78716c; margin-top: 0.35rem;" id="paper-file-status">No PDF selected</div>
           </div>
-          <div style="display: flex; align-items: center; gap: 0.75rem; margin-top: 0.5rem;">
-            <span id="reading-file-status" style="font-size: 0.82rem; color: #64748b;">No PDF file selected</span>
+
+          <!-- Option 2: Session Handout -->
+          <div style="border-top: 1px dashed #e7e5e4; padding-top: 1rem;">
+            <label for="edit-handout-title" class="field-label-admin">2. Speaker Seminar Handout Title</label>
+            <input type="text" id="edit-handout-title" class="field-input-admin" placeholder="e.g. Kibbe Handout — Language of Thought Series">
+            <label class="field-label-admin" style="margin-top: 0.5rem;">Seminar Handout PDF (Choose PDF File or enter URL/path)</label>
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+              <input type="text" id="edit-handout-url" class="field-input-admin" style="flex: 2;" placeholder="e.g. Papers and Handouts/... or https://...">
+              <input type="file" id="edit-handout-file" accept="application/pdf" class="field-input-admin" style="flex: 1;">
+            </div>
+            <div style="font-size: 0.8rem; color: #78716c; margin-top: 0.35rem;" id="handout-file-status">No PDF selected</div>
           </div>
         </div>
 
@@ -1083,6 +1120,64 @@
     </div>
   </div>
 
+  <!-- ==================== MODAL: ADD / EDIT COMMENTATOR ==================== -->
+  <div class="talk-modal-backdrop" id="commentator-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="commentator-modal-title">
+    <div class="talk-modal-card">
+      <button type="button" class="modal-close-btn" id="btn-close-comm-modal" aria-label="Close">&times;</button>
+      <h3 id="commentator-modal-title" style="margin: 0 0 1.25rem; font-family: var(--font-serif); font-size: 1.5rem; color: var(--admin-navy);">
+        Edit Commentator Profile Card
+      </h3>
+
+      <form id="comm-editor-form">
+        <input type="hidden" id="edit-comm-id">
+
+        <div class="form-grid-row-2">
+          <div>
+            <label for="edit-comm-name" class="field-label-admin">Commentator Full Name *</label>
+            <input type="text" id="edit-comm-name" class="field-input-admin" required placeholder="e.g. Prof. Sami Yousif">
+          </div>
+          <div>
+            <label for="edit-comm-affiliation" class="field-label-admin">Institution &amp; Department</label>
+            <input type="text" id="edit-comm-affiliation" class="field-input-admin" placeholder="e.g. The Ohio State University, USA">
+          </div>
+        </div>
+
+        <!-- Photo Upload & URL -->
+        <div style="margin-top: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1.1rem;">
+          <label class="field-label-admin">Commentator Portrait / Photo (Upload File or URL)</label>
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <input type="text" id="edit-comm-img-url" class="field-input-admin" style="flex: 2;" placeholder="e.g. Images/sami-yousif.jpeg or https://...">
+            <input type="file" id="edit-comm-img-file" accept="image/*" class="field-input-admin" style="flex: 1;">
+          </div>
+          <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.75rem;">
+            <img id="comm-img-preview" src="" alt="Commentator Preview" style="width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid #cbd5e1; display: none;">
+            <span id="comm-img-note" style="font-size: 0.82rem; color: #64748b;">No image loaded</span>
+          </div>
+        </div>
+
+        <div style="margin-top: 1rem;">
+          <label for="edit-comm-role-pill" class="field-label-admin">Role Tag</label>
+          <input type="text" id="edit-comm-role-pill" class="field-input-admin" placeholder="e.g. Commentator &bull; Session 1">
+        </div>
+
+        <div style="margin-top: 1rem;">
+          <label for="edit-comm-topic" class="field-label-admin">Commentary Focus / Session Note</label>
+          <input type="text" id="edit-comm-topic" class="field-input-admin" placeholder="e.g. Commentary on Prof. Melissa Kibbe's colloquium on infant object representation.">
+        </div>
+
+        <div style="margin-top: 1rem;">
+          <label for="edit-comm-bio" class="field-label-admin">Commentator Research Biography</label>
+          <textarea id="edit-comm-bio" class="field-input-admin" rows="3" placeholder="Enter academic research summary, laboratory focus, or areas of specialization..."></textarea>
+        </div>
+
+        <div style="margin-top: 1.75rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" id="btn-cancel-comm-modal" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-gold">Save Commentator Card &rarr;</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Toast Notification -->
   <div id="admin-toast" class="admin-toast">Saved successfully</div>
 
@@ -1110,6 +1205,16 @@
         document.getElementById(targetId).classList.add('active');
       });
     });
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
 
     // 3. Supabase Configuration & Fallback Seed
     var SUPABASE_CONFIG = {
@@ -1264,6 +1369,30 @@
     var allTalks = [];
     var currentFilter = 'all';
     var searchKeyword = '';
+    var activeSpeakerTab = 'keynotes';
+
+    var DEFAULT_COMMENTATORS = [
+      {
+        id: 'comm-1',
+        name: 'Prof. Sami Yousif',
+        affiliation: 'The Ohio State University, USA \u2022 Department of Psychology',
+        image: 'Images/sami-yousif.jpeg',
+        role_pill: 'Commentator \u2022 Session 1',
+        topic: "Commentary on Prof. Melissa Kibbe's colloquium on infant object representation.",
+        bio: 'Sami Yousif explores spatial cognition, perceptual grouping, numerical representation, and how cognitive systems organize complex visual and mental information across development.'
+      },
+      {
+        id: 'comm-2',
+        name: 'Prof. Tarun',
+        affiliation: 'University of Delhi, India \u2022 Department of Philosophy',
+        image: '',
+        role_pill: 'Commentator \u2022 Session 2',
+        topic: "Commentary on Prof. Susanna Schellenberg's colloquium on mental evidence and perceptual capacities.",
+        bio: 'Specializes in Indian epistemology, phenomenology, philosophy of mind, and cognitive science interfaces.'
+      }
+    ];
+
+    var allCommentators = [];
 
     function showAdminToast(msg) {
       var t = document.getElementById('admin-toast');
@@ -1475,7 +1604,8 @@
         if (!term) return true;
         return (t.speaker_name && t.speaker_name.toLowerCase().includes(term)) ||
                (t.speaker_affiliation && t.speaker_affiliation.toLowerCase().includes(term)) ||
-               (t.title && t.title.toLowerCase().includes(term));
+               (t.title && t.title.toLowerCase().includes(term)) ||
+               (t.speaker_bio && t.speaker_bio.toLowerCase().includes(term));
       });
 
       if (filtered.length === 0) {
@@ -1557,22 +1687,146 @@
       });
     }
 
-    var speakerSearchInput = document.getElementById('admin-speaker-search');
-    if (speakerSearchInput) {
-      speakerSearchInput.addEventListener('input', function () {
-        renderSpeakerCards(this.value.trim());
+    // 5c. Render Commentator Profile Cards in Admin Tab
+    function renderCommentatorCards(filter) {
+      var container = document.getElementById('admin-commentator-cards-container');
+      var countEl = document.getElementById('count-commentators');
+      if (countEl) countEl.textContent = allCommentators.length;
+      if (!container) return;
+
+      var term = (filter || '').toLowerCase();
+      var filtered = allCommentators.filter(function (c) {
+        if (!term) return true;
+        return (c.name && c.name.toLowerCase().includes(term)) ||
+               (c.affiliation && c.affiliation.toLowerCase().includes(term)) ||
+               (c.topic && c.topic.toLowerCase().includes(term)) ||
+               (c.bio && c.bio.toLowerCase().includes(term));
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div style="grid-column: 1 / -1; padding: 2.5rem; text-align: center; color: #64748b; background: #ffffff; border-radius: 8px; border: 1px dashed #cbd5e1;">No commentator profiles found. Click &ldquo;+ Add New Commentator&rdquo; above to create one.</div>';
+        return;
+      }
+
+      var html = '';
+      filtered.forEach(function (comm) {
+        var initials = (comm.name || '')
+          .replace(/^(prof\.|dr\.|ms\.|mr\.)\s*/i, '')
+          .split(' ')
+          .filter(Boolean)
+          .map(w => w[0])
+          .slice(0, 2)
+          .join('')
+          .toUpperCase() || 'CM';
+
+        var avatarHtml = comm.image
+          ? `<img src="${comm.image}" class="admin-speaker-photo" alt="${comm.name}">`
+          : `<div class="admin-speaker-mono" style="background: #92400e;">${initials}</div>`;
+
+        html += `
+          <div class="admin-speaker-card" style="border-top: 3px solid #b45309;">
+            <div>
+              <div class="admin-speaker-header">
+                ${avatarHtml}
+                <div>
+                  <div style="font-family: var(--font-sans); font-size: 0.74rem; text-transform: uppercase; font-weight: 700; color: #b45309; letter-spacing: 0.05em;">
+                    ${escapeHtml(comm.role_pill || 'Commentator & Discussant')}
+                  </div>
+                  <h3 style="margin: 0.15rem 0 0.25rem; font-family: var(--font-serif); font-size: 1.15rem; color: var(--admin-navy);">
+                    ${escapeHtml(comm.name || 'Unnamed Commentator')}
+                  </h3>
+                  <div style="font-family: var(--font-sans); font-size: 0.84rem; color: #64748b;">
+                    ${comm.affiliation ? comm.affiliation.replace(/&bull;/g, '•') : 'Department & Institution TBA'}
+                  </div>
+                </div>
+              </div>
+
+              ${comm.topic ? `
+                <div style="margin: 0.75rem 0; padding: 0.65rem 0.85rem; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 6px;">
+                  <div style="font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #92400e; margin-bottom: 0.2rem;">Commentary Focus</div>
+                  <div style="font-family: var(--font-sans); font-size: 0.86rem; color: #78350f; line-height: 1.4;">
+                    ${escapeHtml(comm.topic)}
+                  </div>
+                </div>
+              ` : ''}
+
+              <div style="margin: 0.75rem 0;">
+                <div style="font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 0.25rem;">Commentator Biography</div>
+                <div style="font-family: var(--font-sans); font-size: 0.84rem; color: #334155; line-height: 1.5; max-height: 85px; overflow: hidden; text-overflow: ellipsis;">
+                  ${comm.bio ? escapeHtml(comm.bio) : '<em style="color: #94a3b8;">No biography provided.</em>'}
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 1rem; padding-top: 0.85rem; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+              <button type="button" onclick="deleteCommentator('${comm.id}')" style="background: none; border: none; color: #dc2626; font-size: 0.82rem; cursor: pointer; padding: 0.25rem 0.5rem;">
+                Delete
+              </button>
+              <button type="button" class="action-btn-admin edit" data-edit-comm="${comm.id}" style="padding: 0.45rem 0.9rem; font-size: 0.82rem; cursor: pointer;">
+                Edit Profile &rarr;
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+
+      container.querySelectorAll('[data-edit-comm]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-edit-comm');
+          openCommentatorEditor(id);
+        });
       });
     }
 
-    // 6. Search & Filter Listeners
+    // 5d. Tab Pill Switching (Keynotes vs Commentators)
+    var pillKeynotes = document.getElementById('pill-filter-keynotes');
+    var pillCommentators = document.getElementById('pill-filter-commentators');
+    var keynotesGrid = document.getElementById('admin-speaker-cards-container');
+    var commentatorsGrid = document.getElementById('admin-commentator-cards-container');
+
+    if (pillKeynotes && pillCommentators) {
+      pillKeynotes.addEventListener('click', function () {
+        activeSpeakerTab = 'keynotes';
+        pillKeynotes.classList.add('active');
+        pillCommentators.classList.remove('active');
+        if (keynotesGrid) keynotesGrid.style.display = 'grid';
+        if (commentatorsGrid) commentatorsGrid.style.display = 'none';
+        renderSpeakerCards(document.getElementById('admin-speaker-search')?.value.trim());
+      });
+
+      pillCommentators.addEventListener('click', function () {
+        activeSpeakerTab = 'commentators';
+        pillCommentators.classList.add('active');
+        pillKeynotes.classList.remove('active');
+        if (keynotesGrid) keynotesGrid.style.display = 'none';
+        if (commentatorsGrid) commentatorsGrid.style.display = 'grid';
+        renderCommentatorCards(document.getElementById('admin-speaker-search')?.value.trim());
+      });
+    }
+
+    var speakerSearchInput = document.getElementById('admin-speaker-search');
+    if (speakerSearchInput) {
+      speakerSearchInput.addEventListener('input', function () {
+        var q = this.value.trim();
+        if (activeSpeakerTab === 'keynotes') {
+          renderSpeakerCards(q);
+        } else {
+          renderCommentatorCards(q);
+        }
+      });
+    }
+
+    // 6. Search & Filter Listeners for Talks
     document.getElementById('admin-search-input').addEventListener('input', function (e) {
       searchKeyword = e.target.value.trim().toLowerCase();
       renderTalksTable();
     });
 
-    document.querySelectorAll('.filter-btn-pill').forEach(function (btn) {
+    document.querySelectorAll('.filter-btn-pill[data-filter]').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        document.querySelectorAll('.filter-btn-pill').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.filter-btn-pill[data-filter]').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentFilter = btn.getAttribute('data-filter');
         renderTalksTable();
@@ -1599,30 +1853,36 @@
       }
     }
 
-    speakerImgUrlInput.addEventListener('input', () => updateSpeakerPreview(speakerImgUrlInput.value.trim()));
+    if (speakerImgUrlInput) {
+      speakerImgUrlInput.addEventListener('input', () => updateSpeakerPreview(speakerImgUrlInput.value.trim()));
+    }
 
-    speakerImgFileInput.addEventListener('change', function () {
-      var file = this.files[0];
-      if (file) {
-        var reader = new FileReader();
-        reader.onload = function (e) {
-          speakerImgUrlInput.value = e.target.result;
-          updateSpeakerPreview(e.target.result);
-        };
-        reader.readAsDataURL(file);
-      }
-    });
+    if (speakerImgFileInput) {
+      speakerImgFileInput.addEventListener('change', function () {
+        var file = this.files[0];
+        if (file) {
+          var reader = new FileReader();
+          reader.onload = function (e) {
+            speakerImgUrlInput.value = e.target.result;
+            updateSpeakerPreview(e.target.result);
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
 
-    var readingFileInput = document.getElementById('edit-reading-file');
-    var readingUrlInput = document.getElementById('edit-reading-url');
-    var readingFileStatus = document.getElementById('reading-file-status');
+    // Generic PDF upload handler (Cloud Storage + Base64 fallback)
+    function setupPdfUpload(fileInputId, urlInputId, statusElId, label) {
+      var fileInput = document.getElementById(fileInputId);
+      var urlInput = document.getElementById(urlInputId);
+      var statusEl = document.getElementById(statusElId);
+      if (!fileInput || !urlInput) return;
 
-    if (readingFileInput) {
-      readingFileInput.addEventListener('change', async function () {
+      fileInput.addEventListener('change', async function () {
         var file = this.files[0];
         if (!file) return;
 
-        readingFileStatus.textContent = 'Processing ' + file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)...';
+        if (statusEl) statusEl.textContent = 'Processing ' + file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)...';
 
         // 1. Try uploading to Supabase Storage bucket 'readings'
         try {
@@ -1639,25 +1899,28 @@
 
           if (uploadRes.ok) {
             var publicUrl = `${SUPABASE_CONFIG.url}/storage/v1/object/public/readings/${cleanFileName}`;
-            readingUrlInput.value = publicUrl;
-            readingFileStatus.textContent = 'Uploaded to Cloud Storage: ' + file.name;
-            showAdminToast('PDF uploaded to Supabase Storage!');
+            urlInput.value = publicUrl;
+            if (statusEl) statusEl.textContent = 'Uploaded to Cloud Storage: ' + file.name;
+            showAdminToast(label + ' uploaded to Supabase Storage!');
             return;
           }
         } catch (err) {
           console.log('Supabase storage attempt note:', err);
         }
 
-        // 2. Base64 fallback (works everywhere with zero configuration)
+        // 2. Base64 fallback (works everywhere instantly)
         var reader = new FileReader();
         reader.onload = function (e) {
-          readingUrlInput.value = e.target.result;
-          readingFileStatus.textContent = 'Ready to save (' + (file.size / 1024).toFixed(1) + ' KB): ' + file.name;
-          showAdminToast('PDF processed and ready to save!');
+          urlInput.value = e.target.result;
+          if (statusEl) statusEl.textContent = 'Ready to save (' + (file.size / 1024).toFixed(1) + ' KB): ' + file.name;
+          showAdminToast(label + ' processed and ready to save!');
         };
         reader.readAsDataURL(file);
       });
     }
+
+    setupPdfUpload('edit-paper-file', 'edit-paper-url', 'paper-file-status', 'Research Paper');
+    setupPdfUpload('edit-handout-file', 'edit-handout-url', 'handout-file-status', 'Seminar Handout');
 
     function openTalkEditor(talkId) {
       var talk = allTalks.find(t => t.id === talkId);
@@ -1677,10 +1940,25 @@
       document.getElementById('edit-talk-title-input').value = talk.title || '';
       document.getElementById('edit-talk-format').value = talk.format_commentators || '';
       document.getElementById('edit-talk-abstract').value = talk.abstract || '';
-      document.getElementById('edit-reading-title').value = talk.reading_title || '';
-      document.getElementById('edit-reading-url').value = talk.reading_url || '';
-      if (readingFileInput) readingFileInput.value = '';
-      if (readingFileStatus) readingFileStatus.textContent = talk.reading_url ? 'Active reading link attached' : 'No PDF file selected';
+
+      // Research Paper
+      var paperTitleInput = document.getElementById('edit-paper-title');
+      var paperUrlInput = document.getElementById('edit-paper-url');
+      var paperStatus = document.getElementById('paper-file-status');
+      if (paperTitleInput) paperTitleInput.value = talk.paper_title || talk.reading_title || '';
+      if (paperUrlInput) paperUrlInput.value = talk.paper_url || talk.reading_url || '';
+      if (document.getElementById('edit-paper-file')) document.getElementById('edit-paper-file').value = '';
+      if (paperStatus) paperStatus.textContent = (talk.paper_url || talk.reading_url) ? 'Active paper link attached' : 'No PDF selected';
+
+      // Seminar Handout
+      var handoutTitleInput = document.getElementById('edit-handout-title');
+      var handoutUrlInput = document.getElementById('edit-handout-url');
+      var handoutStatus = document.getElementById('handout-file-status');
+      if (handoutTitleInput) handoutTitleInput.value = talk.handout_title || '';
+      if (handoutUrlInput) handoutUrlInput.value = talk.handout_url || '';
+      if (document.getElementById('edit-handout-file')) document.getElementById('edit-handout-file').value = '';
+      if (handoutStatus) handoutStatus.textContent = talk.handout_url ? 'Active handout link attached' : 'No PDF selected';
+
       document.getElementById('edit-zoom-link').value = talk.zoom_link || '';
       document.getElementById('edit-zoom-meeting-id').value = talk.zoom_meeting_id || '';
       document.getElementById('edit-zoom-passcode').value = talk.zoom_passcode || '';
@@ -1708,10 +1986,23 @@
       document.getElementById('edit-talk-title-input').value = '';
       document.getElementById('edit-talk-format').value = 'Talk\nStudent-First Q&A\nOpen Q&A';
       document.getElementById('edit-talk-abstract').value = '';
-      document.getElementById('edit-reading-title').value = '';
-      document.getElementById('edit-reading-url').value = '';
-      if (readingFileInput) readingFileInput.value = '';
-      if (readingFileStatus) readingFileStatus.textContent = 'No PDF file selected';
+
+      var paperTitleInput = document.getElementById('edit-paper-title');
+      var paperUrlInput = document.getElementById('edit-paper-url');
+      var paperStatus = document.getElementById('paper-file-status');
+      if (paperTitleInput) paperTitleInput.value = '';
+      if (paperUrlInput) paperUrlInput.value = '';
+      if (document.getElementById('edit-paper-file')) document.getElementById('edit-paper-file').value = '';
+      if (paperStatus) paperStatus.textContent = 'No PDF selected';
+
+      var handoutTitleInput = document.getElementById('edit-handout-title');
+      var handoutUrlInput = document.getElementById('edit-handout-url');
+      var handoutStatus = document.getElementById('handout-file-status');
+      if (handoutTitleInput) handoutTitleInput.value = '';
+      if (handoutUrlInput) handoutUrlInput.value = '';
+      if (document.getElementById('edit-handout-file')) document.getElementById('edit-handout-file').value = '';
+      if (handoutStatus) handoutStatus.textContent = 'No PDF selected';
+
       document.getElementById('edit-zoom-link').value = '';
       document.getElementById('edit-zoom-meeting-id').value = '';
       document.getElementById('edit-zoom-passcode').value = '';
@@ -1736,6 +2027,133 @@
       if (e.target === talkModal) closeTalkModal();
     });
 
+    // 7b. Commentator Modal Handlers
+    var commModal = document.getElementById('commentator-modal-backdrop');
+    var commForm = document.getElementById('comm-editor-form');
+    var commImgUrlInput = document.getElementById('edit-comm-img-url');
+    var commImgFileInput = document.getElementById('edit-comm-img-file');
+    var commImgPreview = document.getElementById('comm-img-preview');
+    var commImgNote = document.getElementById('comm-img-note');
+
+    function updateCommPreview(src) {
+      if (src) {
+        commImgPreview.src = src;
+        commImgPreview.style.display = 'block';
+        commImgNote.textContent = 'Preview active';
+      } else {
+        commImgPreview.src = '';
+        commImgPreview.style.display = 'none';
+        commImgNote.textContent = 'No image loaded';
+      }
+    }
+
+    if (commImgUrlInput) {
+      commImgUrlInput.addEventListener('input', () => updateCommPreview(commImgUrlInput.value.trim()));
+    }
+
+    if (commImgFileInput) {
+      commImgFileInput.addEventListener('change', function () {
+        var file = this.files[0];
+        if (file) {
+          var reader = new FileReader();
+          reader.onload = function (e) {
+            commImgUrlInput.value = e.target.result;
+            updateCommPreview(e.target.result);
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    function openCommentatorEditor(commId) {
+      var comm = allCommentators.find(c => c.id === commId);
+      if (!comm) return;
+
+      document.getElementById('commentator-modal-title').textContent = 'Edit Commentator: ' + (comm.name || '');
+      document.getElementById('edit-comm-id').value = comm.id;
+      document.getElementById('edit-comm-name').value = comm.name || '';
+      document.getElementById('edit-comm-affiliation').value = comm.affiliation || '';
+      document.getElementById('edit-comm-img-url').value = comm.image || '';
+      updateCommPreview(comm.image || '');
+      document.getElementById('edit-comm-role-pill').value = comm.role_pill || 'Commentator &bull; Session';
+      document.getElementById('edit-comm-topic').value = comm.topic || '';
+      document.getElementById('edit-comm-bio').value = comm.bio || '';
+
+      commModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function openCreateCommentator() {
+      document.getElementById('commentator-modal-title').textContent = 'Add New Commentator / Discussant';
+      document.getElementById('edit-comm-id').value = 'comm-' + Date.now();
+      document.getElementById('edit-comm-name').value = '';
+      document.getElementById('edit-comm-affiliation').value = '';
+      document.getElementById('edit-comm-img-url').value = '';
+      updateCommPreview('');
+      document.getElementById('edit-comm-role-pill').value = 'Commentator';
+      document.getElementById('edit-comm-topic').value = '';
+      document.getElementById('edit-comm-bio').value = '';
+
+      commModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeCommentatorModal() {
+      if (!commModal) return;
+      commModal.classList.remove('open');
+      document.body.style.overflow = '';
+      if (commForm) commForm.reset();
+    }
+
+    document.getElementById('btn-add-commentator')?.addEventListener('click', openCreateCommentator);
+    document.getElementById('btn-close-comm-modal')?.addEventListener('click', closeCommentatorModal);
+    document.getElementById('btn-cancel-comm-modal')?.addEventListener('click', closeCommentatorModal);
+    commModal?.addEventListener('click', (e) => {
+      if (e.target === commModal) closeCommentatorModal();
+    });
+
+    if (commForm) {
+      commForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var id = document.getElementById('edit-comm-id').value;
+        var name = document.getElementById('edit-comm-name').value.trim();
+        var affiliation = document.getElementById('edit-comm-affiliation').value.trim();
+        var image = document.getElementById('edit-comm-img-url').value.trim();
+        var role_pill = document.getElementById('edit-comm-role-pill').value.trim();
+        var topic = document.getElementById('edit-comm-topic').value.trim();
+        var bio = document.getElementById('edit-comm-bio').value.trim();
+
+        var commData = {
+          id: id,
+          name: name,
+          affiliation: affiliation,
+          image: image,
+          role_pill: role_pill,
+          topic: topic,
+          bio: bio
+        };
+
+        var idx = allCommentators.findIndex(c => c.id === id);
+        if (idx >= 0) allCommentators[idx] = commData;
+        else allCommentators.push(commData);
+
+        localStorage.setItem('mindscapes_commentators', JSON.stringify(allCommentators));
+        renderCommentatorCards();
+        closeCommentatorModal();
+        showAdminToast('Commentator card saved successfully!');
+      });
+    }
+
+    function deleteCommentator(id) {
+      var comm = allCommentators.find(c => c.id === id);
+      if (!confirm(`Are you sure you want to remove commentator profile: ${comm?.name || ''}?`)) return;
+
+      allCommentators = allCommentators.filter(c => c.id !== id);
+      localStorage.setItem('mindscapes_commentators', JSON.stringify(allCommentators));
+      renderCommentatorCards();
+      showAdminToast('Commentator profile removed.');
+    }
+
     // 8. Save Talk Form
     talkForm.addEventListener('submit', async function (e) {
       e.preventDefault();
@@ -1752,8 +2170,12 @@
       var title = document.getElementById('edit-talk-title-input').value.trim();
       var format = document.getElementById('edit-talk-format').value.trim();
       var abstract = document.getElementById('edit-talk-abstract').value.trim();
-      var readTitle = document.getElementById('edit-reading-title').value.trim();
-      var readUrl = document.getElementById('edit-reading-url').value.trim();
+
+      var paperTitle = document.getElementById('edit-paper-title') ? document.getElementById('edit-paper-title').value.trim() : '';
+      var paperUrl = document.getElementById('edit-paper-url') ? document.getElementById('edit-paper-url').value.trim() : '';
+      var handoutTitle = document.getElementById('edit-handout-title') ? document.getElementById('edit-handout-title').value.trim() : '';
+      var handoutUrl = document.getElementById('edit-handout-url') ? document.getElementById('edit-handout-url').value.trim() : '';
+
       var zoomLink = document.getElementById('edit-zoom-link').value.trim();
       var zoomMeetingId = document.getElementById('edit-zoom-meeting-id').value.trim();
       var zoomPasscode = document.getElementById('edit-zoom-passcode').value.trim();
@@ -1774,8 +2196,12 @@
         title: title,
         format_commentators: format,
         abstract: abstract,
-        reading_title: readTitle,
-        reading_url: readUrl,
+        paper_title: paperTitle,
+        paper_url: paperUrl,
+        handout_title: handoutTitle,
+        handout_url: handoutUrl,
+        reading_title: paperTitle || handoutTitle || '',
+        reading_url: paperUrl || handoutUrl || '',
         zoom_link: zoomLink,
         zoom_meeting_id: zoomMeetingId,
         zoom_passcode: zoomPasscode,
@@ -1871,6 +2297,7 @@
 
     // 12. App Initialization
     async function initAdminApp() {
+      // 1. Talks
       var cached = localStorage.getItem('mindscapes_talks');
       if (cached) {
         try { allTalks = JSON.parse(cached); } catch (e) {}
@@ -1879,13 +2306,27 @@
         allTalks = [...DEFAULT_COLLOQUIA];
         localStorage.setItem('mindscapes_talks', JSON.stringify(allTalks));
       }
+
+      // 2. Commentators
+      var cachedComms = localStorage.getItem('mindscapes_commentators');
+      if (cachedComms) {
+        try { allCommentators = JSON.parse(cachedComms); } catch (e) {}
+      }
+      if (!allCommentators || allCommentators.length === 0) {
+        allCommentators = [...DEFAULT_COMMENTATORS];
+        localStorage.setItem('mindscapes_commentators', JSON.stringify(allCommentators));
+      }
+
       renderTalksTable();
+      renderSpeakerCards();
+      renderCommentatorCards();
 
       var remote = await loadTalksRemote();
       if (remote && remote.length > 0) {
         allTalks = remote;
         localStorage.setItem('mindscapes_talks', JSON.stringify(allTalks));
         renderTalksTable();
+        renderSpeakerCards();
         document.getElementById('cloud-sync-text').textContent = 'Connected to Supabase (Live Cloud Sync Active)';
       }
     }
