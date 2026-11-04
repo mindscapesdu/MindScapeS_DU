@@ -555,17 +555,11 @@
               role_pill: 'Commentator \u2022 Session 1',
               topic: "Commentary on Prof. Melissa Kibbe's colloquium on infant object representation.",
               bio: 'Sami Yousif explores spatial cognition, perceptual grouping, numerical representation, and how cognitive systems organize complex visual and mental information across development.'
-            },
-            {
-              id: 'comm-2',
-              name: 'Prof. Tarun',
-              affiliation: 'University of Delhi, India \u2022 Department of Philosophy',
-              image: '',
-              role_pill: 'Commentator \u2022 Session 2',
-              topic: "Commentary on Prof. Susanna Schellenberg's colloquium on mental evidence and perceptual capacities.",
-              bio: 'Specializes in Indian epistemology, phenomenology, philosophy of mind, and cognitive science interfaces.'
             }
           ];
+        } else {
+          // Ensure dummy test records are removed
+          commData = commData.filter(function(c) { return c.id !== 'comm-2' && c.name !== 'Prof. Tarun'; });
         }
 
         var commHtml = '';
