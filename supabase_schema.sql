@@ -1,6 +1,11 @@
 -- =============================================================================
--- MindScapeS Frontier Talk Series 2026 - Supabase Registrations Table Schema
--- Run this query in your Supabase Project Dashboard -> SQL Editor -> New Query
+-- MindScapeS Frontier Talk Series 2026 - Supabase Complete Schema
+-- Safe to run and re-run (idempotent with DROP POLICY IF EXISTS)
+-- Run in your Supabase Project Dashboard -> SQL Editor -> New Query
+-- =============================================================================
+
+-- =============================================================================
+-- PART 1: Registrations Table & Policies
 -- =============================================================================
 
 -- 1. Create registrations table
@@ -20,6 +25,7 @@ CREATE TABLE IF NOT EXISTS public.registrations (
 ALTER TABLE public.registrations ENABLE ROW LEVEL SECURITY;
 
 -- 3. Policy to allow anonymous users to register (INSERT)
+DROP POLICY IF EXISTS "Allow public insert registrations" ON public.registrations;
 CREATE POLICY "Allow public insert registrations"
 ON public.registrations
 FOR INSERT
@@ -27,6 +33,7 @@ TO anon
 WITH CHECK (true);
 
 -- 4. Policy to allow anonymous users to update their own registration (UPDATE)
+DROP POLICY IF EXISTS "Allow public update registrations" ON public.registrations;
 CREATE POLICY "Allow public update registrations"
 ON public.registrations
 FOR UPDATE
@@ -35,6 +42,7 @@ USING (true)
 WITH CHECK (true);
 
 -- 5. Policy to allow anonymous users to read registration to support editing (SELECT)
+DROP POLICY IF EXISTS "Allow public read registrations" ON public.registrations;
 CREATE POLICY "Allow public read registrations"
 ON public.registrations
 FOR SELECT
@@ -53,5 +61,80 @@ $$ language 'plpgsql';
 DROP TRIGGER IF EXISTS update_registrations_updated_at ON public.registrations;
 CREATE TRIGGER update_registrations_updated_at
     BEFORE UPDATE ON public.registrations
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+
+-- =============================================================================
+-- PART 2: Talks / Projects Table & Policies (Admin Talk Management)
+-- =============================================================================
+
+-- 7. Create talks table
+CREATE TABLE IF NOT EXISTS public.talks (
+    id TEXT PRIMARY KEY,
+    session_number INT,
+    date_display TEXT NOT NULL,
+    time_display TEXT NOT NULL,
+    speaker_name TEXT NOT NULL,
+    speaker_affiliation TEXT,
+    speaker_image TEXT,
+    title TEXT NOT NULL,
+    abstract TEXT,
+    format_commentators TEXT,
+    reading_title TEXT,
+    reading_url TEXT,
+    status TEXT DEFAULT 'upcoming', -- 'upcoming', 'active', 'concluded'
+    has_abstract BOOLEAN DEFAULT false,
+    has_register BOOLEAN DEFAULT false,
+    zoom_link TEXT,
+    zoom_meeting_id TEXT,
+    zoom_passcode TEXT,
+    zoom_instructions TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- Ensure Zoom columns exist if table was already created
+ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS zoom_link TEXT;
+ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS zoom_meeting_id TEXT;
+ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS zoom_passcode TEXT;
+ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS zoom_instructions TEXT;
+
+-- 8. Enable Row Level Security (RLS) on talks
+ALTER TABLE public.talks ENABLE ROW LEVEL SECURITY;
+
+-- 9. Policies for talks table (idempotent with DROP POLICY IF EXISTS)
+DROP POLICY IF EXISTS "Allow public read talks" ON public.talks;
+CREATE POLICY "Allow public read talks"
+ON public.talks
+FOR SELECT
+TO anon
+USING (true);
+
+DROP POLICY IF EXISTS "Allow public insert talks" ON public.talks;
+CREATE POLICY "Allow public insert talks"
+ON public.talks
+FOR INSERT
+TO anon
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow public update talks" ON public.talks;
+CREATE POLICY "Allow public update talks"
+ON public.talks
+FOR UPDATE
+TO anon
+USING (true)
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow public delete talks" ON public.talks;
+CREATE POLICY "Allow public delete talks"
+ON public.talks
+FOR DELETE
+TO anon
+USING (true);
+
+DROP TRIGGER IF EXISTS update_talks_updated_at ON public.talks;
+CREATE TRIGGER update_talks_updated_at
+    BEFORE UPDATE ON public.talks
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();

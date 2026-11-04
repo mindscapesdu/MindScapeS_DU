@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | MindScapeS Colloquium Management</title>
+  <meta name="description" content="Administrative control portal for managing talks, abstracts, readings, and security settings for the MindScapeS Frontier Talk Series on Cognition.">
+  <link rel="icon" href="Images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css?v=3.1">
+  <style>
+    :root {
+      --admin-bg: #f8fafc;
+      --admin-navy: #0c2340;
+      --admin-navy-dark: #07172b;
+      --admin-gold: #b45309;
+      --admin-gold-hover: #92400e;
+      --admin-border: #e2e8f0;
+      --admin-card: #ffffff;
+      --admin-text: #0f172a;
+      --admin-muted: #64748b;
+    }
+
+    body.admin-body {
+      background-color: var(--admin-bg);
+      min-height: 100vh;
+      color: var(--admin-text);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Navigation */
+    .admin-navbar {
+      background: var(--admin-navy);
+      color: #ffffff;
+      padding: 0.85rem 1.75rem;
+      border-bottom: 3px solid var(--admin-gold);
+      box-shadow: 0 4px 12px rgba(12, 35, 64, 0.15);
+    }
+
+    .admin-navbar-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .admin-logo-group {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .admin-logo-title {
+      font-family: var(--font-serif);
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #ffffff;
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+
+    .admin-role-badge {
+      font-family: var(--font-sans);
+      font-size: 0.72rem;
+      background: rgba(255, 255, 255, 0.14);
+      color: #f5ebd8;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+    }
+
+    .admin-nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .btn-admin-nav {
+      font-family: var(--font-sans);
+      font-size: 0.84rem;
+      font-weight: 500;
+      padding: 0.45rem 0.95rem;
+      border-radius: 5px;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .btn-admin-preview {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .btn-admin-preview:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+    }
+
+    .btn-admin-signout {
+      background: #dc2626;
+      color: #ffffff;
+      border: 1px solid #b91c1c;
+    }
+
+    .btn-admin-signout:hover {
+      background: #b91c1c;
+      color: #ffffff;
+    }
+
+    /* Sub-header Tabs */
+    .admin-tabs-bar {
+      background: #ffffff;
+      border-bottom: 1px solid var(--admin-border);
+      padding: 0 1.75rem;
+    }
+
+    .admin-tabs-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      gap: 2rem;
+    }
+
+    .admin-tab-btn {
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      padding: 1rem 0.25rem;
+      font-family: var(--font-sans);
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--admin-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.15s ease;
+    }
+
+    .admin-tab-btn:hover {
+      color: var(--admin-navy);
+    }
+
+    .admin-tab-btn.active {
+      color: var(--admin-navy);
+      border-bottom-color: var(--admin-gold);
+    }
+
+    /* Content Area */
+    .admin-main-wrap {
+      max-width: 1280px;
+      margin: 2rem auto;
+      padding: 0 1.75rem;
+      flex: 1;
+      width: 100%;
+    }
+
+    .tab-content-panel {
+      display: none;
+      animation: tabFade 0.2s ease-out;
+    }
+
+    .tab-content-panel.active {
+      display: block;
+    }
+
+    @keyframes tabFade {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Status Banner */
+    .system-status-ribbon {
+      background: #ffffff;
+      border: 1px solid var(--admin-border);
+      border-radius: 8px;
+      padding: 0.9rem 1.4rem;
+      margin-bottom: 1.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.85rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+
+    .cloud-sync-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+    }
+
+    /* Stats Cards */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .metric-card {
+      background: #ffffff;
+      border: 1px solid var(--admin-border);
+      border-radius: 8px;
+      padding: 1.35rem 1.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--admin-navy);
+    }
+
+    .metric-card.gold::before { background: var(--admin-gold); }
+    .metric-card.blue::before { background: #2563eb; }
+    .metric-card.gray::before { background: #64748b; }
+
+    .metric-value {
+      font-family: var(--font-serif);
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--admin-navy);
+      line-height: 1;
+      margin-bottom: 0.4rem;
+    }
+
+    .metric-label {
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--admin-muted);
+      font-weight: 600;
+    }
+
+    /* Controls Bar */
+    .table-controls-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .search-filter-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .search-input-admin {
+      padding: 0.55rem 0.95rem;
+      border: 1px solid var(--admin-border);
+      border-radius: 6px;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      width: 260px;
+      background: #ffffff;
+    }
+
+    .search-input-admin:focus {
+      outline: none;
+      border-color: var(--admin-navy);
+      box-shadow: 0 0 0 3px rgba(12, 35, 64, 0.1);
+    }
+
+    .filter-btn-pill {
+      background: #ffffff;
+      border: 1px solid var(--admin-border);
+      border-radius: 20px;
+      padding: 0.4rem 0.85rem;
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--admin-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .filter-btn-pill.active {
+      background: var(--admin-navy);
+      border-color: var(--admin-navy);
+      color: #ffffff;
+    }
+
+    .btn-create-talk {
+      background: var(--admin-gold);
+      color: #ffffff;
+      border: none;
+      padding: 0.65rem 1.25rem;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      box-shadow: 0 2px 6px rgba(180, 83, 9, 0.25);
+      transition: all 0.15s ease;
+    }
+
+    .btn-create-talk:hover {
+      background: var(--admin-gold-hover);
+      transform: translateY(-1px);
+    }
+
+    /* Talks Table */
+    .admin-table-container {
+      background: #ffffff;
+      border: 1px solid var(--admin-border);
+      border-radius: 8px;
+      overflow-x: auto;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    }
+
+    .talks-datatable {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .talks-datatable th {
+      background: #f8fafc;
+      padding: 13px 18px;
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #475569;
+      border-bottom: 1px solid #cbd5e1;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .talks-datatable td {
+      padding: 16px 18px;
+      border-bottom: 1px solid #f1f5f9;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      vertical-align: top;
+      line-height: 1.45;
+    }
+
+    .talks-datatable tr:hover {
+      background: #fbfcfe;
+    }
+
+    .speaker-flex-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .speaker-avatar-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #e2e8f0;
+      border: 2px solid #cbd5e1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: var(--admin-navy);
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .talk-status-badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+    }
+
+    .status-upcoming {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+    }
+
+    .status-active {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+
+    .status-concluded {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+    }
+
+    .action-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      justify-content: center;
+    }
+
+    .btn-row-edit {
+      background: #ffffff;
+      border: 1px solid var(--admin-navy);
+      color: var(--admin-navy);
+      padding: 0.35rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-row-edit:hover {
+      background: var(--admin-navy);
+      color: #ffffff;
+    }
+
+    .btn-row-del {
+      background: #ffffff;
+      border: 1px solid #ef4444;
+      color: #ef4444;
+      padding: 0.35rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-row-del:hover {
+      background: #ef4444;
+      color: #ffffff;
+    }
+
+    /* Settings Cards */
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .settings-box {
+      background: #ffffff;
+      border: 1px solid var(--admin-border);
+      border-radius: 8px;
+      padding: 1.75rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+
+    .settings-heading {
+      font-family: var(--font-serif);
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--admin-navy);
+      margin: 0 0 0.4rem;
+    }
+
+    .settings-desc {
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+      color: var(--admin-muted);
+      margin: 0 0 1.25rem;
+      line-height: 1.5;
+    }
+
+    /* Modal Styling */
+    .talk-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(12, 35, 64, 0.65);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1.25rem;
+    }
+
+    .talk-modal-backdrop.open {
+      display: flex;
+    }
+
+    .talk-modal-card {
+      background: #ffffff;
+      max-width: 820px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      border-radius: 10px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--admin-border);
+      padding: 2.25rem;
+      position: relative;
+    }
+
+    .form-grid-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 700px) {
+      .form-grid-row-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Responsive adjustments for Tablets, iPads & Phones */
+    @media (max-width: 860px) {
+      .admin-navbar-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+
+      .admin-nav-actions {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+
+      .admin-tabs-inner {
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+        gap: 1.25rem;
+      }
+
+      .table-controls-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search-filter-group {
+        width: 100%;
+      }
+
+      .search-input-admin {
+        width: 100%;
+      }
+
+      .btn-create-talk {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .admin-main-wrap {
+        padding: 0 1rem;
+        margin: 1.25rem auto;
+      }
+
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+      }
+
+      .metric-card {
+        padding: 1rem;
+      }
+
+      .metric-value {
+        font-size: 1.75rem;
+      }
+
+      .talk-modal-card {
+        padding: 1.5rem 1.15rem;
+        width: 95%;
+        max-height: 92vh;
+      }
+
+      .settings-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 440px) {
+      .stats-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .field-label-admin {
+      display: block;
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 0.35rem;
+    }
+
+    .field-input-admin {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      font-family: var(--font-sans);
+      font-size: 0.92rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      background: #ffffff;
+      color: #0f172a;
+    }
+
+    .field-input-admin:focus {
+      outline: none;
+      border-color: var(--admin-navy);
+      box-shadow: 0 0 0 3px rgba(12, 35, 64, 0.1);
+    }
+
+    /* Toast */
+    .admin-toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--admin-navy);
+      color: #ffffff;
+      padding: 0.9rem 1.5rem;
+      border-radius: 6px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+      font-family: var(--font-sans);
+      font-size: 0.92rem;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      z-index: 2000;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .admin-toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+
+<body class="admin-body">
+  <!-- Top Navigation Bar -->
+  <header class="admin-navbar">
+    <div class="admin-navbar-inner">
+      <div class="admin-logo-group">
+        <a href="admin.html" class="admin-logo-title">
+          <strong>MindScapeS</strong> Admin Portal
+        </a>
+        <span class="admin-role-badge">Colloquium Manager</span>
+      </div>
+
+      <div class="admin-nav-actions">
+        <span style="font-family: var(--font-sans); font-size: 0.85rem; color: #cbd5e1;">
+          Signed in: <strong id="admin-user-display" style="color: #ffffff;">admin</strong>
+        </span>
+        <a href="schedule.html" class="btn-admin-nav btn-admin-preview" target="_blank">
+          &nearr; View Live Schedule
+        </a>
+        <button id="btn-admin-logout" class="btn-admin-nav btn-admin-signout">
+          Sign Out
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <div class="admin-tabs-bar">
+    <div class="admin-tabs-inner">
+      <button class="admin-tab-btn active" data-tab="tab-talks">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <span>Talks &amp; Colloquia</span>
+      </button>
+
+      <button class="admin-tab-btn" data-tab="tab-security">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <span>Security &amp; Recovery Settings</span>
+      </button>
+    </div>
+  </div>
+
+  <main class="admin-main-wrap">
+
+    <!-- ==================== TAB 1: TALKS MANAGEMENT ==================== -->
+    <div class="tab-content-panel active" id="tab-talks">
+      <!-- Supabase Status Ribbon -->
+      <div class="system-status-ribbon">
+        <div class="cloud-sync-pill">
+          <span class="pulse-dot"></span>
+          <span id="cloud-sync-text">Supabase Cloud Sync Ready (Project: aicypxqetxjhofluwdwf)</span>
+        </div>
+        <div style="font-family: var(--font-sans); font-size: 0.82rem; color: var(--admin-muted);">
+          Target Table: <code>public.talks</code> &bull; Realtime Updates
+        </div>
+      </div>
+
+      <!-- Metrics Row -->
+      <div class="stats-row">
+        <div class="metric-card">
+          <div class="metric-value" id="count-total">8</div>
+          <div class="metric-label">Total Colloquium Sessions</div>
+        </div>
+        <div class="metric-card gold">
+          <div class="metric-value" id="count-active" style="color: var(--admin-gold);">1</div>
+          <div class="metric-label">Active / Live Registration</div>
+        </div>
+        <div class="metric-card blue">
+          <div class="metric-value" id="count-upcoming" style="color: #2563eb;">6</div>
+          <div class="metric-label">Upcoming Sessions</div>
+        </div>
+        <div class="metric-card gray">
+          <div class="metric-value" id="count-concluded" style="color: #64748b;">1</div>
+          <div class="metric-label">Concluded Colloquia</div>
+        </div>
+      </div>
+
+      <!-- Controls & Filter Bar -->
+      <div class="table-controls-bar">
+        <div class="search-filter-group">
+          <input type="text" id="admin-search-input" class="search-input-admin" placeholder="Search by speaker or title...">
+          <button class="filter-btn-pill active" data-filter="all">All Talks</button>
+          <button class="filter-btn-pill" data-filter="active">Active Reg</button>
+          <button class="filter-btn-pill" data-filter="upcoming">Upcoming</button>
+          <button class="filter-btn-pill" data-filter="concluded">Concluded</button>
+        </div>
+
+        <button id="btn-open-create-talk" class="btn-create-talk">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          <span>Add New Talk / Project</span>
+        </button>
+      </div>
+
+      <!-- Table Container -->
+      <div class="admin-table-container">
+        <table class="talks-datatable">
+          <thead>
+            <tr>
+              <th style="width: 7%;">Session</th>
+              <th style="width: 17%;">Date &amp; Time (IST)</th>
+              <th style="width: 23%;">Speaker &amp; Affiliation</th>
+              <th style="width: 25%;">Talk Title</th>
+              <th style="width: 11%;">Status</th>
+              <th style="width: 7%;">Materials</th>
+              <th style="width: 10%; text-align: center;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="admin-talks-tbody">
+            <!-- Rendered by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 2: SECURITY & RECOVERY SETTINGS ==================== -->
+    <div class="tab-content-panel" id="tab-security">
+      <div class="settings-grid">
+        <!-- Recovery Email Card -->
+        <div class="settings-box">
+          <h3 class="settings-heading">Emergency Recovery Email</h3>
+          <p class="settings-desc">
+            If you ever forget your administrator password, a one-time 6-digit recovery code (OTP) will be dispatched to this verified address.
+          </p>
+
+          <form id="form-update-recovery-email">
+            <div style="margin-bottom: 1.25rem;">
+              <label for="setting-recovery-email" class="field-label-admin">Registered Recovery Email Address</label>
+              <input type="email" id="setting-recovery-email" class="field-input-admin" required placeholder="e.g. mindscapesdu@gmail.com">
+            </div>
+            <button type="submit" class="btn btn-gold" style="padding: 0.65rem 1.15rem; font-size: 0.9rem;">
+              Save Recovery Email &rarr;
+            </button>
+          </form>
+        </div>
+
+        <!-- Change Password Card -->
+        <div class="settings-box">
+          <h3 class="settings-heading">Change Administrator Password</h3>
+          <p class="settings-desc">
+            Passwords are stored using <strong>SHA-256 with cryptographic salt</strong>. No plaintext passwords ever touch memory or cloud storage.
+          </p>
+
+          <form id="form-change-password">
+            <div style="margin-bottom: 1rem;">
+              <label for="pwd-current" class="field-label-admin">Current Password</label>
+              <input type="password" id="pwd-current" class="field-input-admin" required placeholder="Enter current password">
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+              <label for="pwd-new" class="field-label-admin">New Password (Min 6 characters)</label>
+              <input type="password" id="pwd-new" class="field-input-admin" required minlength="6" placeholder="Enter new strong password">
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+              <label for="pwd-confirm" class="field-label-admin">Confirm New Password</label>
+              <input type="password" id="pwd-confirm" class="field-input-admin" required minlength="6" placeholder="Confirm new password">
+            </div>
+
+            <button type="submit" class="btn btn-gold" style="padding: 0.65rem 1.15rem; font-size: 0.9rem;">
+              Update Password &rarr;
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==================== MODAL: ADD / EDIT TALK ==================== -->
+  <div class="talk-modal-backdrop" id="talk-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="talk-modal-title">
+    <div class="talk-modal-card">
+      <button type="button" class="modal-close-btn" id="btn-close-talk-modal" aria-label="Close">&times;</button>
+      <h3 id="talk-modal-title" style="margin: 0 0 1.25rem; font-family: var(--font-serif); font-size: 1.5rem; color: var(--admin-navy);">
+        Edit Colloquium Talk
+      </h3>
+
+      <form id="talk-editor-form">
+        <input type="hidden" id="edit-talk-id">
+
+        <div class="form-grid-row-2">
+          <div>
+            <label for="edit-talk-session" class="field-label-admin">Session Number *</label>
+            <input type="number" id="edit-talk-session" class="field-input-admin" required min="1" placeholder="e.g. 1">
+          </div>
+          <div>
+            <label for="edit-talk-status" class="field-label-admin">Colloquium Status *</label>
+            <select id="edit-talk-status" class="field-input-admin">
+              <option value="upcoming">Upcoming Session</option>
+              <option value="active">Active (Open Registration)</option>
+              <option value="concluded">Concluded (Past Session)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid-row-2" style="margin-top: 1rem;">
+          <div>
+            <label for="edit-talk-date" class="field-label-admin">Date Display (IST) *</label>
+            <input type="text" id="edit-talk-date" class="field-input-admin" required placeholder="e.g. Fri, Nov 6, 2026">
+          </div>
+          <div>
+            <label for="edit-talk-time" class="field-label-admin">Time Display (IST) *</label>
+            <input type="text" id="edit-talk-time" class="field-input-admin" required placeholder="e.g. 8:00 AM IST (UTC+5:30)">
+          </div>
+        </div>
+
+        <div class="form-grid-row-2" style="margin-top: 1rem;">
+          <div>
+            <label for="edit-talk-speaker" class="field-label-admin">Speaker Full Name *</label>
+            <input type="text" id="edit-talk-speaker" class="field-input-admin" required placeholder="e.g. Prof. Susanna Schellenberg">
+          </div>
+          <div>
+            <label for="edit-talk-affiliation" class="field-label-admin">Speaker Affiliation / Institution</label>
+            <input type="text" id="edit-talk-affiliation" class="field-input-admin" placeholder="e.g. [Institution Placeholder: Rutgers University]">
+          </div>
+        </div>
+
+        <!-- Speaker Image Upload & URL -->
+        <div style="margin-top: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1.1rem;">
+          <label class="field-label-admin">Speaker Portrait / Image (URL or Local Upload)</label>
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <input type="text" id="edit-speaker-img-url" class="field-input-admin" style="flex: 2;" placeholder="e.g. Images/melissa-kibbe.jpeg or https://...">
+            <input type="file" id="edit-speaker-img-file" accept="image/*" class="field-input-admin" style="flex: 1;">
+          </div>
+          <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.75rem;">
+            <img id="speaker-img-preview" src="" alt="Speaker Preview" style="width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid #cbd5e1; display: none;">
+            <span id="speaker-img-note" style="font-size: 0.82rem; color: #64748b;">No image loaded</span>
+          </div>
+        </div>
+
+        <div style="margin-top: 1rem;">
+          <label for="edit-talk-title-input" class="field-label-admin">Talk / Project Title *</label>
+          <input type="text" id="edit-talk-title-input" class="field-input-admin" required placeholder="e.g. Perceptual Capacities and the Grounds of Mental Evidence">
+        </div>
+
+        <div style="margin-top: 1rem;">
+          <label for="edit-talk-format" class="field-label-admin">
+            Format &amp; Commentators (One item per line; TBA commentators will be filtered out automatically)
+          </label>
+          <textarea id="edit-talk-format" class="field-input-admin" rows="4" placeholder="Talk&#10;Student-First Q&amp;A&#10;Commentator: Prof. Tarun&#10;Open Q&amp;A"></textarea>
+        </div>
+
+        <div style="margin-top: 1rem;">
+          <label for="edit-talk-abstract" class="field-label-admin">Full Abstract</label>
+          <textarea id="edit-talk-abstract" class="field-input-admin" rows="5" placeholder="Enter full abstract paragraphs..."></textarea>
+        </div>
+
+        <div class="form-grid-row-2" style="margin-top: 1rem;">
+          <div>
+            <label for="edit-reading-title" class="field-label-admin">Reading Document Title</label>
+            <input type="text" id="edit-reading-title" class="field-input-admin" placeholder="e.g. The Flexibility and Stability of Perspectives">
+          </div>
+          <div>
+            <label for="edit-reading-url" class="field-label-admin">Reading PDF / Document URL</label>
+            <input type="text" id="edit-reading-url" class="field-input-admin" placeholder="e.g. Papers and Handouts/...pdf or external link">
+          </div>
+        </div>
+
+        <!-- Zoom Meeting Configuration Box -->
+        <div style="margin-top: 1.25rem; background: #f0f7ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 1.15rem;">
+          <h4 style="margin: 0 0 0.35rem; font-family: var(--font-sans); font-size: 0.95rem; color: #1e40af; display: flex; align-items: center; gap: 0.5rem;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 7l-7 5 7 5V7z"/>
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+            </svg>
+            <span>Zoom Access &amp; Meeting Credentials for this Talk</span>
+          </h4>
+          <p style="margin: 0 0 0.85rem; font-size: 0.82rem; color: #3b82f6;">
+            These credentials are automatically provided to attendees upon registration if registration is enabled for this talk.
+          </p>
+          <div class="form-grid-row-2">
+            <div>
+              <label for="edit-zoom-link" class="field-label-admin">Zoom Join URL</label>
+              <input type="url" id="edit-zoom-link" class="field-input-admin" placeholder="e.g. https://us04web.zoom.us/launch/jc/78997015908">
+            </div>
+            <div>
+              <label for="edit-zoom-meeting-id" class="field-label-admin">Meeting ID</label>
+              <input type="text" id="edit-zoom-meeting-id" class="field-input-admin" placeholder="e.g. 789 9701 5908">
+            </div>
+          </div>
+          <div class="form-grid-row-2" style="margin-top: 0.75rem;">
+            <div>
+              <label for="edit-zoom-passcode" class="field-label-admin">Meeting Passcode</label>
+              <input type="text" id="edit-zoom-passcode" class="field-input-admin" placeholder="e.g. cognition">
+            </div>
+            <div>
+              <label for="edit-zoom-instructions" class="field-label-admin">Access Notes / Remarks (Optional)</label>
+              <input type="text" id="edit-zoom-instructions" class="field-input-admin" placeholder="e.g. Waiting room active &bull; Opens 10 mins early">
+            </div>
+          </div>
+        </div>
+
+        <!-- Table Display & Registration Options -->
+        <div style="margin-top: 1.25rem; display: flex; gap: 1.5rem; flex-wrap: wrap; background: #f8fafc; padding: 0.95rem 1.15rem; border: 1px solid #e2e8f0; border-radius: 6px;">
+          <label style="display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.88rem; cursor: pointer;">
+            <input type="checkbox" id="edit-has-abstract">
+            <span>Show <strong>"View Abstract"</strong> button in public schedule</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.88rem; cursor: pointer; color: #1e3a8a;">
+            <input type="checkbox" id="edit-has-register">
+            <span><strong>Enable Registration</strong> (Adds talk to public Registration Dropdown &amp; displays "Register" button)</span>
+          </label>
+        </div>
+
+        <div style="margin-top: 1.75rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" id="btn-cancel-talk-modal" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-gold">Save to Supabase &amp; Update Site &rarr;</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="admin-toast" class="admin-toast">Saved successfully</div>
+
+  <!-- Scripts -->
+  <script src="js/admin-auth.js"></script>
+  <script>
+    // 1. Session Verification Guard
+    var session = AuthSecurity.checkSession();
+    if (!session) {
+      window.location.href = 'login.html';
+    } else {
+      document.getElementById('admin-user-display').textContent = session.user;
+    }
+
+    // 2. Tab Switching Logic
+    var tabBtns = document.querySelectorAll('.admin-tab-btn');
+    var tabPanels = document.querySelectorAll('.tab-content-panel');
+
+    tabBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var targetId = btn.getAttribute('data-tab');
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabPanels.forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(targetId).classList.add('active');
+      });
+    });
+
+    // 3. Supabase Configuration & Fallback Seed
+    var SUPABASE_CONFIG = {
+      url: 'https://aicypxqetxjhofluwdwf.supabase.co',
+      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpY3lweHFldHhqaG9mbHV3ZHdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NjE3NDQsImV4cCI6MjEwODMzNzc0NH0.AJaqqkMCb3apx5gG8UaEDu0feeC2DKo6dU6tdzb-Aeo',
+      table: 'talks'
+    };
+
+    var DEFAULT_COLLOQUIA = [
+      {
+        id: 'session-1',
+        session_number: 1,
+        date_display: 'Thu, Oct 30, 2026',
+        time_display: '6:30 PM IST (UTC+5:30)',
+        speaker_name: 'Prof. Melissa Kibbe',
+        speaker_affiliation: '[Institution Placeholder: Boston University]',
+        speaker_image: 'Images/melissa-kibbe.jpeg',
+        title: 'Working Memory Representations and Object File Tracking in Infancy',
+        abstract: 'An inaugural colloquium examining the cognitive architecture of object representation, feature binding, and conceptual development in infants and young children. The discussion explored how working memory tracks discrete object files and how computational constraints inform models of mental representation.',
+        format_commentators: 'Talk\nStudent-First Q&A\nCommentator: Prof. Sami Yousif\nOpen Q&A',
+        reading_title: 'Kibbe Handout LoTSeries UDelhi',
+        reading_url: 'Papers and Handouts/Kibbe Handout LoTSeries UDelhi.pdf',
+        status: 'concluded',
+        has_abstract: true,
+        has_register: false
+      },
+      {
+        id: 'session-2',
+        session_number: 2,
+        date_display: 'Fri, Nov 6, 2026',
+        time_display: '8:00 AM IST (UTC+5:30)',
+        speaker_name: 'Prof. Susanna Schellenberg',
+        speaker_affiliation: '[Institution Placeholder: Rutgers University]',
+        speaker_image: '',
+        title: 'Perceptual Capacities and the Grounds of Mental Evidence',
+        abstract: 'This paper develops an account of perspectives that explains both perspectival stability and flexibility informed by research in neuroscience, cognitive psychology, and philosophy of mind. Any individual has limited processing resources, and so selects and represents only information pertinent to the situation or task at hand, filtering out information that can safely be ignored.\n\nAn individual’s active perspective is anchored, for example, by her self-concept currently in force. This perspectival anchor can shift from moment to moment as she navigates her environment, thus yielding a change in her active perspective. However, the extent to which an individual’s active perspective can shift is restricted by her overall cognitive, perceptual, emotional and agential schemas, which constitute what we call her dormant perspective. Thus, while an individual’s dormant perspective changes only slowly over time, her active perspective can change abruptly.',
+        format_commentators: 'Talk\nStudent-First Q&A\nCommentator: Prof. Tarun\nOpen Q&A',
+        reading_title: 'The Flexibility and Stability of Perspectives',
+        reading_url: 'Papers and Handouts/Schellenberg-FlexibiltyStabilityPerspectives-AristSoc.pdf',
+        status: 'active',
+        has_abstract: true,
+        has_register: true,
+        zoom_link: 'https://us04web.zoom.us/launch/jc/78997015908',
+        zoom_meeting_id: '789 9701 5908',
+        zoom_passcode: 'cognition',
+        zoom_instructions: 'Waiting room opens 10 minutes prior to session start.'
+      },
+      {
+        id: 'session-3',
+        session_number: 3,
+        date_display: 'Fri, Nov 13, 2026',
+        time_display: '7:30 PM IST (UTC+5:30)',
+        speaker_name: 'Prof. Edward Gibson',
+        speaker_affiliation: '[Institution Placeholder: MIT]',
+        speaker_image: '',
+        title: 'Communicative Efficiency and Information-Theoretic Constraints on Language',
+        abstract: '',
+        format_commentators: 'Talk\nStudent-First Q&A\nCommentator: Ms. Gowri\nOpen Q&A',
+        reading_title: '',
+        reading_url: '',
+        status: 'upcoming',
+        has_abstract: false,
+        has_register: false
+      },
+      {
+        id: 'session-4',
+        session_number: 4,
+        date_display: 'Fri, Nov 20 & Sat, Nov 21, 2026',
+        time_display: 'Part I (Nov 20): 8:00 AM IST\nPart II (Nov 21): 8:00 AM IST',
+        speaker_name: 'Prof. Sandeep Prasada',
+        speaker_affiliation: '[Institution Placeholder: Hunter College, CUNY]',
+        speaker_image: '',
+        title: 'Principled Connections, Formal Explanations, and the Conceptual Mind (Two-Part Colloquium)',
+        abstract: '',
+        format_commentators: 'Talk\nStudent-First Q&A\nCommentator: Prof. Melissa Kibbe\nOpen Q&A',
+        reading_title: '',
+        reading_url: '',
+        status: 'upcoming',
+        has_abstract: false,
+        has_register: false
+      },
+      {
+        id: 'session-5',
+        session_number: 5,
+        date_display: 'Fri, Nov 27, 2026',
+        time_display: '6:30 PM IST (UTC+5:30)',
+        speaker_name: 'Prof. V. N. Jha',
+        speaker_affiliation: '[Institution Placeholder: Univ. of Pune / CVV]',
+        speaker_image: '',
+        title: 'Nyaya Epistemology: Sabda-Pramana and the Cognitive Structure of Understanding',
+        abstract: '',
+        format_commentators: 'Talk\nStudent-First Q&A\nCommentator: Yinzhu Yang\nOpen Q&A',
+        reading_title: '',
+        reading_url: '',
+        status: 'upcoming',
+        has_abstract: false,
+        has_register: false
+      },
+      {
+        id: 'session-6',
+        session_number: 6,
+        date_display: 'Fri, Dec 4 & Sat, Dec 5, 2026',
+        time_display: 'Morning Session: 8:00 AM IST (both days)',
+        speaker_name: 'Prof. Liz Spelke',
+        speaker_affiliation: '[Institution Placeholder: Harvard University]',
+        speaker_image: '',
+        title: 'Core Knowledge Systems: Objects, Places, Agents, and Number (Two-Part Morning Colloquium)',
+        abstract: '',
+        format_commentators: 'Talk\nStudent-First Q&A\nCommentator 1: Prof. Moira Dillon\nCommentator 2: Prof. Sandeep Prasada\nOpen Q&A',
+        reading_title: '',
+        reading_url: '',
+        status: 'upcoming',
+        has_abstract: false,
+        has_register: false
+      },
+      {
+        id: 'session-7',
+        session_number: 7,
+        date_display: 'Fri, Dec 4, 2026 (Evening)',
+        time_display: '6:30 PM IST (UTC+5:30)',
+        speaker_name: 'Prof. Sami Yousif',
+        speaker_affiliation: '[Institution Placeholder: Univ. of Pennsylvania]',
+        speaker_image: 'Images/sami-yousif.jpeg',
+        title: 'The Architecture of Spatial Perception and Conceptual Representation',
+        abstract: '',
+        format_commentators: 'Talk\nStudent-First Q&A\nOpen Q&A',
+        reading_title: '',
+        reading_url: '',
+        status: 'upcoming',
+        has_abstract: false,
+        has_register: false
+      },
+      {
+        id: 'session-8',
+        session_number: 8,
+        date_display: 'Fri, Dec 11, 2026',
+        time_display: '6:30 PM IST (UTC+5:30)',
+        speaker_name: 'Prof. Moira Dillon',
+        speaker_affiliation: '[Institution Placeholder: NYU]',
+        speaker_image: '',
+        title: 'Visual Intuitions, Geometry, and Symbolic Form in Cognitive Development',
+        abstract: '',
+        format_commentators: 'Talk\nStudent-First Q&A\nOpen Q&A',
+        reading_title: '',
+        reading_url: '',
+        status: 'upcoming',
+        has_abstract: false,
+        has_register: false
+      }
+    ];
+
+    var allTalks = [];
+    var currentFilter = 'all';
+    var searchKeyword = '';
+
+    function showAdminToast(msg) {
+      var t = document.getElementById('admin-toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3500);
+    }
+
+    // 4. Supabase API Helpers
+    async function loadTalksRemote() {
+      try {
+        var res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?select=*&order=session_number.asc`, {
+          headers: {
+            'apikey': SUPABASE_CONFIG.anonKey,
+            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`
+          }
+        });
+        if (res.ok) {
+          var data = await res.json();
+          if (Array.isArray(data) && data.length > 0) return data;
+        }
+      } catch (e) {}
+      return null;
+    }
+
+    async function syncTalkToSupabase(talk) {
+      try {
+        var res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?on_conflict=id`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_CONFIG.anonKey,
+            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+            'Prefer': 'resolution=merge-duplicates'
+          },
+          body: JSON.stringify(talk)
+        });
+        return res.ok;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    async function removeTalkFromSupabase(id) {
+      try {
+        var res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?id=eq.${id}`, {
+          method: 'DELETE',
+          headers: {
+            'apikey': SUPABASE_CONFIG.anonKey,
+            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`
+          }
+        });
+        return res.ok;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    // 5. Render Talks Table & Metrics
+    function renderTalksTable() {
+      var tbody = document.getElementById('admin-talks-tbody');
+      tbody.innerHTML = '';
+
+      var total = allTalks.length;
+      var activeCount = 0;
+      var upcomingCount = 0;
+      var concludedCount = 0;
+
+      allTalks.sort((a, b) => (a.session_number || 0) - (b.session_number || 0));
+
+      var filtered = allTalks.filter(function (talk) {
+        if (talk.status === 'active') activeCount++;
+        else if (talk.status === 'concluded') concludedCount++;
+        else upcomingCount++;
+
+        if (currentFilter !== 'all' && talk.status !== currentFilter) return false;
+        if (searchKeyword) {
+          var haystack = ((talk.speaker_name || '') + ' ' + (talk.title || '') + ' ' + (talk.speaker_affiliation || '')).toLowerCase();
+          if (!haystack.includes(searchKeyword)) return false;
+        }
+        return true;
+      });
+
+      document.getElementById('count-total').textContent = total;
+      document.getElementById('count-active').textContent = activeCount;
+      document.getElementById('count-upcoming').textContent = upcomingCount;
+      document.getElementById('count-concluded').textContent = concludedCount;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2.5rem; color: #94a3b8;">No matching colloquium talks found.</td></tr>';
+        return;
+      }
+
+      filtered.forEach(function (talk) {
+        var tr = document.createElement('tr');
+
+        var initials = talk.speaker_name
+          ? talk.speaker_name.replace(/^Prof\.\s*|^Dr\.\s*|^Ms\.\s*|^Mr\.\s*/i, '').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+          : 'SP';
+
+        var avatarHtml = talk.speaker_image
+          ? `<img src="${talk.speaker_image}" class="speaker-avatar-circle" alt="${talk.speaker_name}">`
+          : `<div class="speaker-avatar-circle">${initials}</div>`;
+
+        var statusClass = talk.status === 'active' ? 'status-active' : (talk.status === 'concluded' ? 'status-concluded' : 'status-upcoming');
+        var statusLabel = talk.status === 'active' ? 'Active Reg' : (talk.status === 'concluded' ? 'Concluded' : 'Upcoming');
+
+        var materials = [
+          talk.abstract ? 'Abstract' : null,
+          talk.reading_url ? 'Reading' : null
+        ].filter(Boolean).join(', ') || '<span style="color: #cbd5e1;">None</span>';
+
+        tr.innerHTML = `
+          <td><strong>#${talk.session_number || '—'}</strong></td>
+          <td>
+            <strong>${talk.date_display}</strong><br>
+            <span style="font-size: 0.8rem; color: #64748b;">${(talk.time_display || '').replace(/\n/g, '<br>')}</span>
+          </td>
+          <td>
+            <div class="speaker-flex-chip">
+              ${avatarHtml}
+              <div>
+                <strong>${talk.speaker_name}</strong><br>
+                <span style="font-size: 0.8rem; color: #64748b;">${talk.speaker_affiliation || '—'}</span>
+              </div>
+            </div>
+          </td>
+          <td><em>${talk.title}</em></td>
+          <td><span class="talk-status-badge ${statusClass}">${statusLabel}</span></td>
+          <td>${materials}</td>
+          <td style="text-align: center;">
+            <div class="action-btn-group">
+              <button class="btn-row-edit" onclick="openTalkEditor('${talk.id}')">Edit</button>
+              <button class="btn-row-del" onclick="deleteTalk('${talk.id}')">Delete</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 6. Search & Filter Listeners
+    document.getElementById('admin-search-input').addEventListener('input', function (e) {
+      searchKeyword = e.target.value.trim().toLowerCase();
+      renderTalksTable();
+    });
+
+    document.querySelectorAll('.filter-btn-pill').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.filter-btn-pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.getAttribute('data-filter');
+        renderTalksTable();
+      });
+    });
+
+    // 7. Modal Handlers
+    var talkModal = document.getElementById('talk-modal-backdrop');
+    var talkForm = document.getElementById('talk-editor-form');
+    var speakerImgUrlInput = document.getElementById('edit-speaker-img-url');
+    var speakerImgFileInput = document.getElementById('edit-speaker-img-file');
+    var speakerImgPreview = document.getElementById('speaker-img-preview');
+    var speakerImgNote = document.getElementById('speaker-img-note');
+
+    function updateSpeakerPreview(src) {
+      if (src) {
+        speakerImgPreview.src = src;
+        speakerImgPreview.style.display = 'block';
+        speakerImgNote.textContent = 'Preview active';
+      } else {
+        speakerImgPreview.src = '';
+        speakerImgPreview.style.display = 'none';
+        speakerImgNote.textContent = 'No image loaded';
+      }
+    }
+
+    speakerImgUrlInput.addEventListener('input', () => updateSpeakerPreview(speakerImgUrlInput.value.trim()));
+
+    speakerImgFileInput.addEventListener('change', function () {
+      var file = this.files[0];
+      if (file) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          speakerImgUrlInput.value = e.target.result;
+          updateSpeakerPreview(e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    function openTalkEditor(talkId) {
+      var talk = allTalks.find(t => t.id === talkId);
+      if (!talk) return;
+
+      document.getElementById('talk-modal-title').textContent = `Edit Session #${talk.session_number}: ${talk.speaker_name}`;
+      document.getElementById('edit-talk-id').value = talk.id;
+      document.getElementById('edit-talk-session').value = talk.session_number || '';
+      document.getElementById('edit-talk-status').value = talk.status || 'upcoming';
+      document.getElementById('edit-talk-date').value = talk.date_display || '';
+      document.getElementById('edit-talk-time').value = talk.time_display || '';
+      document.getElementById('edit-talk-speaker').value = talk.speaker_name || '';
+      document.getElementById('edit-talk-affiliation').value = talk.speaker_affiliation || '';
+      document.getElementById('edit-speaker-img-url').value = talk.speaker_image || '';
+      updateSpeakerPreview(talk.speaker_image || '');
+      document.getElementById('edit-talk-title-input').value = talk.title || '';
+      document.getElementById('edit-talk-format').value = talk.format_commentators || '';
+      document.getElementById('edit-talk-abstract').value = talk.abstract || '';
+      document.getElementById('edit-reading-title').value = talk.reading_title || '';
+      document.getElementById('edit-reading-url').value = talk.reading_url || '';
+      document.getElementById('edit-zoom-link').value = talk.zoom_link || '';
+      document.getElementById('edit-zoom-meeting-id').value = talk.zoom_meeting_id || '';
+      document.getElementById('edit-zoom-passcode').value = talk.zoom_passcode || '';
+      document.getElementById('edit-zoom-instructions').value = talk.zoom_instructions || '';
+      document.getElementById('edit-has-abstract').checked = !!talk.has_abstract;
+      document.getElementById('edit-has-register').checked = !!talk.has_register;
+
+      talkModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function openCreateTalk() {
+      var nextNum = allTalks.length + 1;
+      document.getElementById('talk-modal-title').textContent = 'Add New Colloquium Talk / Project';
+      document.getElementById('edit-talk-id').value = `session-${Date.now()}`;
+      document.getElementById('edit-talk-session').value = nextNum;
+      document.getElementById('edit-talk-status').value = 'upcoming';
+      document.getElementById('edit-talk-date').value = '';
+      document.getElementById('edit-talk-time').value = '6:30 PM IST (UTC+5:30)';
+      document.getElementById('edit-talk-speaker').value = '';
+      document.getElementById('edit-talk-affiliation').value = '';
+      document.getElementById('edit-speaker-img-url').value = '';
+      updateSpeakerPreview('');
+      document.getElementById('edit-talk-title-input').value = '';
+      document.getElementById('edit-talk-format').value = 'Talk\nStudent-First Q&A\nOpen Q&A';
+      document.getElementById('edit-talk-abstract').value = '';
+      document.getElementById('edit-reading-title').value = '';
+      document.getElementById('edit-reading-url').value = '';
+      document.getElementById('edit-zoom-link').value = '';
+      document.getElementById('edit-zoom-meeting-id').value = '';
+      document.getElementById('edit-zoom-passcode').value = '';
+      document.getElementById('edit-zoom-instructions').value = '';
+      document.getElementById('edit-has-abstract').checked = false;
+      document.getElementById('edit-has-register').checked = false;
+
+      talkModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeTalkModal() {
+      talkModal.classList.remove('open');
+      document.body.style.overflow = '';
+      talkForm.reset();
+    }
+
+    document.getElementById('btn-open-create-talk').addEventListener('click', openCreateTalk);
+    document.getElementById('btn-cancel-talk-modal').addEventListener('click', closeTalkModal);
+    document.getElementById('btn-close-talk-modal').addEventListener('click', closeTalkModal);
+    talkModal.addEventListener('click', (e) => {
+      if (e.target === talkModal) closeTalkModal();
+    });
+
+    // 8. Save Talk Form
+    talkForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      var talkId = document.getElementById('edit-talk-id').value;
+      var sessionNum = parseInt(document.getElementById('edit-talk-session').value, 10);
+      var status = document.getElementById('edit-talk-status').value;
+      var dateDisp = document.getElementById('edit-talk-date').value.trim();
+      var timeDisp = document.getElementById('edit-talk-time').value.trim();
+      var speaker = document.getElementById('edit-talk-speaker').value.trim();
+      var affil = document.getElementById('edit-talk-affiliation').value.trim();
+      var img = document.getElementById('edit-speaker-img-url').value.trim();
+      var title = document.getElementById('edit-talk-title-input').value.trim();
+      var format = document.getElementById('edit-talk-format').value.trim();
+      var abstract = document.getElementById('edit-talk-abstract').value.trim();
+      var readTitle = document.getElementById('edit-reading-title').value.trim();
+      var readUrl = document.getElementById('edit-reading-url').value.trim();
+      var zoomLink = document.getElementById('edit-zoom-link').value.trim();
+      var zoomMeetingId = document.getElementById('edit-zoom-meeting-id').value.trim();
+      var zoomPasscode = document.getElementById('edit-zoom-passcode').value.trim();
+      var zoomInstructions = document.getElementById('edit-zoom-instructions').value.trim();
+      var hasAbs = document.getElementById('edit-has-abstract').checked;
+      var hasReg = document.getElementById('edit-has-register').checked;
+
+      var talkData = {
+        id: talkId,
+        session_number: sessionNum,
+        status: status,
+        date_display: dateDisp,
+        time_display: timeDisp,
+        speaker_name: speaker,
+        speaker_affiliation: affil,
+        speaker_image: img,
+        title: title,
+        format_commentators: format,
+        abstract: abstract,
+        reading_title: readTitle,
+        reading_url: readUrl,
+        zoom_link: zoomLink,
+        zoom_meeting_id: zoomMeetingId,
+        zoom_passcode: zoomPasscode,
+        zoom_instructions: zoomInstructions,
+        has_abstract: hasAbs,
+        has_register: hasReg,
+        updated_at: new Date().toISOString()
+      };
+
+      var idx = allTalks.findIndex(t => t.id === talkId);
+      if (idx >= 0) allTalks[idx] = talkData;
+      else allTalks.push(talkData);
+
+      localStorage.setItem('mindscapes_talks', JSON.stringify(allTalks));
+      renderTalksTable();
+      closeTalkModal();
+
+      showAdminToast('Synchronizing with Supabase...');
+      var ok = await syncTalkToSupabase(talkData);
+      if (ok) {
+        showAdminToast('Published & Synced with Supabase!');
+      } else {
+        showAdminToast('Saved locally. (Cloud sync will retry)');
+      }
+    });
+
+    // 9. Delete Talk
+    async function deleteTalk(id) {
+      var talk = allTalks.find(t => t.id === id);
+      if (!confirm(`Are you sure you want to remove session #${talk?.session_number || ''}: ${talk?.speaker_name}?`)) return;
+
+      allTalks = allTalks.filter(t => t.id !== id);
+      localStorage.setItem('mindscapes_talks', JSON.stringify(allTalks));
+      renderTalksTable();
+
+      showAdminToast('Deleting from cloud database...');
+      await removeTalkFromSupabase(id);
+      showAdminToast('Session removed.');
+    }
+
+    // 10. Security Settings Tab Handlers
+    var recoveryEmailInput = document.getElementById('setting-recovery-email');
+    recoveryEmailInput.value = AuthSecurity.getRecoveryEmail();
+
+    document.getElementById('form-update-recovery-email').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var newEmail = recoveryEmailInput.value.trim();
+      if (AuthSecurity.setRecoveryEmail(newEmail)) {
+        showAdminToast('Recovery email updated to: ' + newEmail);
+      } else {
+        alert('Please enter a valid email address.');
+      }
+    });
+
+    document.getElementById('form-change-password').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var currentPass = document.getElementById('pwd-current').value;
+      var newPass = document.getElementById('pwd-new').value;
+      var confirmPass = document.getElementById('pwd-confirm').value;
+
+      if (newPass !== confirmPass) {
+        alert('New passwords do not match. Please verify.');
+        return;
+      }
+
+      if (newPass.length < 6) {
+        alert('Password must be at least 6 characters long.');
+        return;
+      }
+
+      // Verify current password first
+      var currentHash = AuthSecurity.getPasswordHash();
+      var currentUsername = AuthSecurity.getUsername();
+      var testLogin = await AuthSecurity.login(currentUsername, currentPass, true);
+
+      if (!testLogin.success) {
+        alert('Current password entered is incorrect.');
+        return;
+      }
+
+      var ok = await AuthSecurity.setPassword(newPass);
+      if (ok) {
+        showAdminToast('Administrator password updated successfully!');
+        document.getElementById('form-change-password').reset();
+      }
+    });
+
+    // 11. Sign Out
+    document.getElementById('btn-admin-logout').addEventListener('click', function () {
+      AuthSecurity.logout();
+      window.location.href = 'login.html';
+    });
+
+    // 12. App Initialization
+    async function initAdminApp() {
+      var cached = localStorage.getItem('mindscapes_talks');
+      if (cached) {
+        try { allTalks = JSON.parse(cached); } catch (e) {}
+      }
+      if (!allTalks || allTalks.length === 0) {
+        allTalks = [...DEFAULT_COLLOQUIA];
+        localStorage.setItem('mindscapes_talks', JSON.stringify(allTalks));
+      }
+      renderTalksTable();
+
+      var remote = await loadTalksRemote();
+      if (remote && remote.length > 0) {
+        allTalks = remote;
+        localStorage.setItem('mindscapes_talks', JSON.stringify(allTalks));
+        renderTalksTable();
+        document.getElementById('cloud-sync-text').textContent = 'Connected to Supabase (Live Cloud Sync Active)';
+      }
+    }
+
+    initAdminApp();
+  </script>
+</body>
+
+</html>

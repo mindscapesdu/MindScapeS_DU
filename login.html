@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Portal Login | MindScapeS Frontier Talk Series • University of Delhi</title>
+  <meta name="description" content="Secure administrative authentication portal for the MindScapeS Frontier Talk Series on Cognition, Department of Philosophy, University of Delhi.">
+  <link rel="icon" href="Images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css?v=3.1">
+  <style>
+    :root {
+      --auth-navy: #091a2e;
+      --auth-card-bg: #ffffff;
+      --auth-border: #e2dcd2;
+      --auth-gold: #b45309;
+      --auth-gold-hover: #92400e;
+      --auth-muted: #57534e;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 15%, #f4ede2 0%, #fdfcfb 65%, #eae3d5 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .auth-page-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1.25rem;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 460px;
+      background: var(--auth-card-bg);
+      border: 1px solid var(--auth-border);
+      border-radius: 10px;
+      box-shadow: 0 12px 40px rgba(12, 35, 64, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+      padding: 2.75rem 2.25rem 2.25rem;
+      position: relative;
+      transition: transform 0.2s ease;
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .auth-emblem {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 1.1rem;
+      background: #0c2340;
+      border: 2px solid #d4a359;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(12, 35, 64, 0.18);
+    }
+
+    .auth-badge {
+      display: inline-block;
+      font-family: var(--font-sans);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      background: #fdf6ec;
+      color: #92400e;
+      border: 1px solid #fed7aa;
+      padding: 0.22rem 0.65rem;
+      border-radius: 4px;
+      margin-bottom: 0.65rem;
+    }
+
+    .auth-title {
+      font-family: var(--font-serif);
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: #0c2340;
+      margin: 0 0 0.35rem;
+      letter-spacing: -0.015em;
+    }
+
+    .auth-subtitle {
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+      color: var(--auth-muted);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .form-group-auth {
+      margin-bottom: 1.35rem;
+      position: relative;
+    }
+
+    .form-label-auth {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-sans);
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 0.45rem;
+    }
+
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 1rem;
+      color: #94a3b8;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .input-auth {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.75rem;
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #fdfdfd;
+      color: #0f172a;
+      transition: all 0.15s ease;
+    }
+
+    .input-auth:focus {
+      outline: none;
+      border-color: #0c2340;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(12, 35, 64, 0.12);
+    }
+
+    .btn-toggle-eye {
+      position: absolute;
+      right: 0.85rem;
+      background: none;
+      border: none;
+      color: #64748b;
+      cursor: pointer;
+      padding: 0.25rem;
+      display: flex;
+      align-items: center;
+      transition: color 0.15s ease;
+    }
+
+    .btn-toggle-eye:hover {
+      color: #0c2340;
+    }
+
+    .auth-link {
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      color: var(--auth-gold);
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .auth-link:hover {
+      color: var(--auth-gold-hover);
+      text-decoration: underline;
+    }
+
+    .btn-auth-submit {
+      width: 100%;
+      padding: 0.85rem;
+      background: #0c2340;
+      color: #ffffff;
+      border: 1px solid #0c2340;
+      border-radius: 6px;
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.15s ease;
+      box-shadow: 0 2px 8px rgba(12, 35, 64, 0.18);
+    }
+
+    .btn-auth-submit:hover {
+      background: #17365d;
+      border-color: #17365d;
+      transform: translateY(-1px);
+    }
+
+    .btn-auth-submit:disabled {
+      background: #94a3b8;
+      border-color: #94a3b8;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .auth-alert {
+      display: none;
+      padding: 0.8rem 1rem;
+      border-radius: 6px;
+      font-family: var(--font-sans);
+      font-size: 0.86rem;
+      line-height: 1.45;
+      margin-bottom: 1.25rem;
+      animation: alertSlide 0.2s ease-out;
+    }
+
+    @keyframes alertSlide {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .auth-alert-error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+    }
+
+    .auth-alert-success {
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+    }
+
+    .security-guarantee-bar {
+      margin-top: 2rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid #f1f5f9;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .security-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-family: var(--font-sans);
+      font-size: 0.74rem;
+      color: #64748b;
+    }
+
+    .security-pill svg {
+      color: #059669;
+      flex-shrink: 0;
+    }
+
+    /* Modal for Password Recovery */
+    .recovery-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(9, 26, 46, 0.65);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1.25rem;
+    }
+
+    .recovery-modal-backdrop.open {
+      display: flex;
+    }
+
+    .recovery-modal {
+      background: #ffffff;
+      max-width: 460px;
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
+      padding: 2.25rem 2rem;
+      position: relative;
+      animation: modalScale 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalScale {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-step {
+      display: none;
+    }
+
+    .modal-step.active {
+      display: block;
+    }
+
+    .otp-display-card {
+      background: #f8fafc;
+      border: 1px dashed #94a3b8;
+      border-radius: 6px;
+      padding: 1rem;
+      text-align: center;
+      margin: 1.25rem 0;
+    }
+
+    .otp-code {
+      font-family: monospace;
+      font-size: 1.65rem;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      color: var(--auth-gold);
+    }
+
+    @media (max-width: 480px) {
+      .auth-page-container {
+        padding: 1.5rem 1rem;
+      }
+
+      .auth-card {
+        padding: 2rem 1.25rem 1.5rem;
+      }
+
+      .auth-title {
+        font-size: 1.45rem;
+      }
+
+      .security-guarantee-bar {
+        grid-template-columns: 1fr;
+        gap: 0.6rem;
+      }
+
+      .recovery-modal {
+        padding: 1.6rem 1.15rem;
+        width: 95%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ==================== SITE HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-top">
+      <div class="container-wide header-top-inner">
+        <h1 class="site-title">
+          <a href="index.html"><strong>MindScapeS</strong> Frontier Talk Series on Cognition</a>
+        </h1>
+        <div class="host-tag">
+          <span>Department of Philosophy &bull; University of Delhi</span>
+        </div>
+      </div>
+    </div>
+    <div class="nav-bar">
+      <div class="container-wide nav-bar-inner">
+        <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="main-nav" aria-label="Toggle navigation menu">
+          Menu &equiv;
+        </button>
+        <ul class="main-nav" id="main-nav">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="schedule.html">Schedule</a></li>
+          <li><a href="speakers.html">Speakers</a></li>
+          <li><a href="archive.html">Archive</a></li>
+          <li><a href="readings.html">Reading List</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+        <div class="header-cta">
+          <a href="schedule.html" class="btn-register-header">&larr; Return to Public Schedule</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN CONTENT ==================== -->
+  <main class="auth-page-container">
+    <div class="auth-card" id="auth-card">
+      <div class="auth-header">
+        <div class="auth-emblem">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#f4ede2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+        <span class="auth-badge">Restricted Administrative Portal</span>
+        <h2 class="auth-title">Colloquium Manager</h2>
+        <p class="auth-subtitle">Sign in to manage colloquium talks, abstracts, preparatory literature, and speaker assets.</p>
+      </div>
+
+      <!-- Alerts -->
+      <div id="login-alert-error" class="auth-alert auth-alert-error" role="alert"></div>
+      <div id="login-alert-success" class="auth-alert auth-alert-success" role="status"></div>
+
+      <form id="auth-login-form">
+        <div class="form-group-auth">
+          <label for="auth-username" class="form-label-auth">Administrator Username</label>
+          <div class="input-wrap">
+            <span class="input-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            <input type="text" id="auth-username" class="input-auth" required autocomplete="username" placeholder="e.g. admin" value="admin">
+          </div>
+        </div>
+
+        <div class="form-group-auth">
+          <div class="form-label-auth">
+            <label for="auth-password" style="cursor: pointer;">Password</label>
+            <a id="btn-forgot-password" class="auth-link">Forgot Password?</a>
+          </div>
+          <div class="input-wrap">
+            <span class="input-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </span>
+            <input type="password" id="auth-password" class="input-auth" required autocomplete="current-password" placeholder="Enter administrator password">
+            <button type="button" id="btn-toggle-pass" class="btn-toggle-eye" aria-label="Toggle password visibility">
+              <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+          <label style="display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.85rem; color: #475569; cursor: pointer;">
+            <input type="checkbox" id="auth-remember" checked>
+            <span>Stay authenticated on this device</span>
+          </label>
+        </div>
+
+        <button type="submit" id="btn-login-submit" class="btn-auth-submit">
+          <span>Authorize Access</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </button>
+      </form>
+
+      <!-- Security Guarantees -->
+      <div class="security-guarantee-bar">
+        <div class="security-pill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <span>SHA-256 Cryptographic Hash</span>
+        </div>
+        <div class="security-pill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <span>Brute-Force Rate Limiting</span>
+        </div>
+        <div class="security-pill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <span>Recovery Email Protocol</span>
+        </div>
+        <div class="security-pill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <span>4-Hour Active Session Token</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==================== PASSWORD RECOVERY MODAL ==================== -->
+  <div class="recovery-modal-backdrop" id="recovery-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="recovery-heading">
+    <div class="recovery-modal">
+      <button type="button" class="modal-close-btn" id="btn-close-recovery" aria-label="Close">&times;</button>
+      
+      <!-- Step 1: Enter Recovery Email -->
+      <div class="modal-step active" id="rec-step-1">
+        <h3 id="recovery-heading" style="margin: 0 0 0.5rem; font-family: var(--font-serif); font-size: 1.4rem; color: #0c2340;">
+          Password Recovery
+        </h3>
+        <p style="margin: 0 0 1.25rem; font-family: var(--font-sans); font-size: 0.88rem; color: var(--text-muted); line-height: 1.5;">
+          Enter the registered administrator recovery email to receive a secure one-time verification code (OTP).
+        </p>
+
+        <div id="rec-alert-1" class="auth-alert auth-alert-error"></div>
+
+        <form id="form-rec-step-1">
+          <div class="form-group-auth">
+            <label for="rec-email-input" class="form-label-auth">Registered Recovery Email</label>
+            <input type="email" id="rec-email-input" class="input-auth" required placeholder="e.g. mindscapesdu@gmail.com" style="padding-left: 1rem;">
+          </div>
+          <button type="submit" class="btn btn-gold" style="width: 100%; padding: 0.75rem;">
+            Send Verification Code &rarr;
+          </button>
+        </form>
+      </div>
+
+      <!-- Step 2: Verification Code (OTP) & Reset -->
+      <div class="modal-step" id="rec-step-2">
+        <h3 style="margin: 0 0 0.5rem; font-family: var(--font-serif); font-size: 1.4rem; color: #0c2340;">
+          Verify &amp; Reset Password
+        </h3>
+        <p style="margin: 0 0 1rem; font-family: var(--font-sans); font-size: 0.88rem; color: var(--text-muted); line-height: 1.5;">
+          A 6-digit one-time code has been generated for: <strong id="rec-target-email" style="color: #0c2340;"></strong>
+        </p>
+
+        <div class="otp-display-card">
+          <div style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 0.35rem;">
+            One-Time Verification Code
+          </div>
+          <div class="otp-code" id="otp-rendered-code">------</div>
+          <div style="font-size: 0.76rem; color: #94a3b8; margin-top: 0.35rem;">Valid for 10 minutes</div>
+        </div>
+
+        <div id="rec-alert-2" class="auth-alert auth-alert-error"></div>
+
+        <form id="form-rec-step-2">
+          <div class="form-group-auth">
+            <label for="rec-otp-input" class="form-label-auth">Enter 6-Digit Code</label>
+            <input type="text" id="rec-otp-input" class="input-auth" required maxlength="6" pattern="[0-9]{6}" placeholder="e.g. 542891" style="padding-left: 1rem; letter-spacing: 0.15em; font-weight: 600;">
+          </div>
+
+          <div class="form-group-auth">
+            <label for="rec-new-password" class="form-label-auth">New Administrator Password</label>
+            <input type="password" id="rec-new-password" class="input-auth" required minlength="6" placeholder="At least 6 characters" style="padding-left: 1rem;">
+          </div>
+
+          <div class="form-group-auth">
+            <label for="rec-confirm-password" class="form-label-auth">Confirm New Password</label>
+            <input type="password" id="rec-confirm-password" class="input-auth" required minlength="6" placeholder="Re-enter new password" style="padding-left: 1rem;">
+          </div>
+
+          <button type="submit" class="btn btn-gold" style="width: 100%; padding: 0.75rem;">
+            Update Password &amp; Sign In &rarr;
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SITE FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="container-wide footer-inner">
+      <div class="footer-col">
+        <p><strong>MindScapeS Frontier Talk Series on Cognition</strong></p>
+        <p>Department of Philosophy, Faculty of Arts<br>University of Delhi, Delhi 110007, India</p>
+        <p>Contact: <a href="mailto:mindscapesdu@gmail.com">mindscapesdu@gmail.com</a></p>
+      </div>
+      <div class="footer-col" style="text-align: right;">
+        <p><strong>Navigation</strong></p>
+        <ul class="footer-links" style="justify-content: flex-end;">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="schedule.html">Schedule</a></li>
+          <li><a href="speakers.html">Speakers</a></li>
+          <li><a href="archive.html">Archive</a></li>
+          <li><a href="readings.html">Reading List</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+        <p style="margin-top: 1.25rem; font-size: 0.82rem; color: #a8a29e;">&copy; 2026 MindScapeS, Department of Philosophy, University of Delhi.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/admin-auth.js"></script>
+  <script>
+    // 1. Check if user already has an active, valid session
+    var activeSession = AuthSecurity.checkSession();
+    if (activeSession) {
+      window.location.href = 'admin.html';
+    }
+
+    // 2. DOM Elements
+    var loginForm = document.getElementById('auth-login-form');
+    var errorAlert = document.getElementById('login-alert-error');
+    var successAlert = document.getElementById('login-alert-success');
+    var submitBtn = document.getElementById('btn-login-submit');
+    var passInput = document.getElementById('auth-password');
+    var togglePassBtn = document.getElementById('btn-toggle-pass');
+    var eyeIcon = document.getElementById('eye-icon');
+
+    // 3. Password visibility toggle
+    togglePassBtn.addEventListener('click', function () {
+      if (passInput.type === 'password') {
+        passInput.type = 'text';
+        eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+      } else {
+        passInput.type = 'password';
+        eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+      }
+    });
+
+    // 4. Check for active lockout on page load
+    function checkLockout() {
+      var lock = AuthSecurity.getLockoutStatus();
+      if (lock.locked) {
+        submitBtn.disabled = true;
+        errorAlert.textContent = 'Account locked due to multiple failed attempts. Please retry in ' + Math.ceil(lock.remainingSeconds / 60) + ' minute(s).';
+        errorAlert.style.display = 'block';
+      }
+    }
+    checkLockout();
+
+    // 5. Handle Login Form Submit
+    loginForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      errorAlert.style.display = 'none';
+      successAlert.style.display = 'none';
+
+      var username = document.getElementById('auth-username').value.trim();
+      var password = passInput.value;
+      var remember = document.getElementById('auth-remember').checked;
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Verifying Credentials...</span>';
+
+      var result = await AuthSecurity.login(username, password, remember);
+
+      if (result.success) {
+        successAlert.textContent = 'Authentication successful! Redirecting to Admin Dashboard...';
+        successAlert.style.display = 'block';
+        setTimeout(function () {
+          window.location.href = 'admin.html';
+        }, 600);
+      } else {
+        errorAlert.textContent = result.error;
+        errorAlert.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Authorize Access</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+        
+        // Shake card feedback
+        var card = document.getElementById('auth-card');
+        card.style.transform = 'translateX(-6px)';
+        setTimeout(() => card.style.transform = 'translateX(6px)', 80);
+        setTimeout(() => card.style.transform = 'translateX(-4px)', 160);
+        setTimeout(() => card.style.transform = 'translateX(0)', 240);
+      }
+    });
+
+    // 6. Password Recovery Modal Flow
+    var recModal = document.getElementById('recovery-modal-backdrop');
+    var btnForgot = document.getElementById('btn-forgot-password');
+    var btnCloseRec = document.getElementById('btn-close-recovery');
+    var formRec1 = document.getElementById('form-rec-step-1');
+    var formRec2 = document.getElementById('form-rec-step-2');
+    var recStep1 = document.getElementById('rec-step-1');
+    var recStep2 = document.getElementById('rec-step-2');
+    var recAlert1 = document.getElementById('rec-alert-1');
+    var recAlert2 = document.getElementById('rec-alert-2');
+
+    btnForgot.addEventListener('click', function () {
+      recModal.classList.add('open');
+      recStep1.classList.add('active');
+      recStep2.classList.remove('active');
+      recAlert1.style.display = 'none';
+      recAlert2.style.display = 'none';
+      document.getElementById('rec-email-input').value = AuthSecurity.getRecoveryEmail();
+    });
+
+    btnCloseRec.addEventListener('click', function () {
+      recModal.classList.remove('open');
+    });
+
+    recModal.addEventListener('click', function (e) {
+      if (e.target === recModal) recModal.classList.remove('open');
+    });
+
+    formRec1.addEventListener('submit', function (e) {
+      e.preventDefault();
+      recAlert1.style.display = 'none';
+      var email = document.getElementById('rec-email-input').value.trim();
+      var res = AuthSecurity.requestRecoveryOtp(email);
+
+      if (res.success) {
+        document.getElementById('rec-target-email').textContent = res.email;
+        document.getElementById('otp-rendered-code').textContent = res.otp;
+        recStep1.classList.remove('active');
+        recStep2.classList.add('active');
+      } else {
+        recAlert1.textContent = res.error;
+        recAlert1.style.display = 'block';
+      }
+    });
+
+    formRec2.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      recAlert2.style.display = 'none';
+      var otp = document.getElementById('rec-otp-input').value.trim();
+      var newPass = document.getElementById('rec-new-password').value;
+      var confirmPass = document.getElementById('rec-confirm-password').value;
+
+      if (newPass !== confirmPass) {
+        recAlert2.textContent = 'Passwords do not match. Please re-enter.';
+        recAlert2.style.display = 'block';
+        return;
+      }
+
+      if (newPass.length < 6) {
+        recAlert2.textContent = 'Password must be at least 6 characters long.';
+        recAlert2.style.display = 'block';
+        return;
+      }
+
+      var res = await AuthSecurity.verifyOtpAndResetPassword(otp, newPass);
+      if (res.success) {
+        recModal.classList.remove('open');
+        successAlert.textContent = 'Password reset successfully! Please sign in with your new password.';
+        successAlert.style.display = 'block';
+        passInput.value = '';
+      } else {
+        recAlert2.textContent = res.error;
+        recAlert2.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+
+</html>
