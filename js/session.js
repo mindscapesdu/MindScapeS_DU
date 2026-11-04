@@ -591,10 +591,14 @@
         commentatorsGrid.innerHTML = commHtml;
       }
 
-      // 3. Dynamic Upcoming Archival Banner (archive.html)
+      // 3. Dynamic Upcoming Archival Banner & Concluded Sessions (archive.html)
       initDynamicArchive(talks);
+      initDynamicArchivedSessions(talks);
 
-      // 4. Dynamic Homepage Colloquium Poster (index.html)
+      // 4. Dynamic Literature Modules (readings.html)
+      initDynamicReadings(talks);
+
+      // 5. Dynamic Homepage Colloquium Poster (index.html)
       initDynamicPoster(talks);
     }
 
@@ -651,6 +655,141 @@
           ' Following the live session, discussion records and materials will be indexed here.';
       } else {
         banner.innerHTML = '<strong>Series Complete:</strong> All sessions from the current colloquium cycle are indexed above. Discussion records, video archives, and seminar materials are permanently preserved.';
+      }
+    }
+
+    // Function to dynamically render Concluded Sessions in archive.html
+    function initDynamicArchivedSessions(talks) {
+      var archiveContainer = document.getElementById('archived-sessions-container');
+      if (!archiveContainer || !Array.isArray(talks)) return;
+
+      var concludedTalks = talks.filter(function (t) { return t.status === 'concluded'; });
+      concludedTalks.sort(function (a, b) { return (a.session_number || 0) - (b.session_number || 0); });
+
+      if (concludedTalks.length > 0) {
+        var archiveHtml = '';
+        concludedTalks.forEach(function (talk) {
+          var materialsList = [];
+          if (talk.handout_url) {
+            materialsList.push(
+              '<li style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.92rem;">' +
+                '<span><strong>Speaker Handout:</strong> <em>' + escapeHtml(talk.speaker_name) + ' &bull; MindScapeS Colloquium</em></span>' +
+                '<a href="' + escapeHtml(talk.handout_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Download Handout (PDF)</a>' +
+              '</li>'
+            );
+          }
+          if (talk.paper_url) {
+            materialsList.push(
+              '<li style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.92rem;' + (materialsList.length > 0 ? ' border-top: 1px solid #eae5de; padding-top: 0.65rem;' : '') + '">' +
+                '<span><strong>Research Paper:</strong> ' + escapeHtml(talk.reading_title || talk.title) + '</span>' +
+                '<a href="' + escapeHtml(talk.paper_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Download Paper (PDF)</a>' +
+              '</li>'
+            );
+          }
+          if (talk.reading_url && talk.reading_url !== talk.paper_url && talk.reading_url !== talk.handout_url) {
+            materialsList.push(
+              '<li style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.92rem;' + (materialsList.length > 0 ? ' border-top: 1px solid #eae5de; padding-top: 0.65rem;' : '') + '">' +
+                '<span><strong>Prep Reading:</strong> ' + escapeHtml(talk.reading_title || talk.title) + '</span>' +
+                '<a href="' + escapeHtml(talk.reading_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Download Prep Reading (PDF)</a>' +
+              '</li>'
+            );
+          }
+
+          var materialsBox = '';
+          if (materialsList.length > 0) {
+            materialsBox = '<div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 4px; padding: 1.25rem 1.5rem; margin: 1.5rem 0;">' +
+              '<h4 style="margin: 0 0 0.75rem; font-family: var(--font-serif); font-size: 1.1rem; color: var(--accent-color);">Session Materials &amp; Artifacts</h4>' +
+              '<ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.65rem;">' +
+                materialsList.join('') +
+              '</ul>' +
+            '</div>';
+          }
+
+          var commentatorLine = '';
+          if (talk.format_commentators) {
+            commentatorLine = '<div class="session-commentator-line">' + escapeHtml(talk.format_commentators) + '</div>';
+          }
+
+          var abstractHtml = '';
+          if (talk.abstract) {
+            abstractHtml = '<div style="margin: 1.25rem 0;"><p style="font-size: 0.98rem; line-height: 1.65; color: var(--text-color);">' + escapeHtml(talk.abstract) + '</p></div>';
+          }
+
+          archiveHtml += '<article class="session-card" id="session-' + (talk.session_number || '') + '">' +
+            '<div class="session-card-header">' +
+              '<span class="status-badge completed">Concluded &bull; Session ' + (talk.session_number || '') + '</span>' +
+              '<span class="subtext">Held on ' + escapeHtml(talk.date_display) + (talk.time_display ? ' &bull; ' + escapeHtml(talk.time_display) : '') + '</span>' +
+            '</div>' +
+            '<h3 class="session-title">' + escapeHtml(talk.title) + '</h3>' +
+            '<div class="session-speaker-line">Speaker: ' + escapeHtml(talk.speaker_name) + (talk.speaker_affiliation ? ' (' + escapeHtml(talk.speaker_affiliation) + ')' : '') + '</div>' +
+            commentatorLine +
+            abstractHtml +
+            materialsBox +
+            '<div class="subtext" style="margin-top: 1rem;">' +
+              '<em>Note on Recordings:</em> For scholarly inquiries regarding audio/video archives or discussion transcripts, please email <a href="mailto:mindscapesdu@gmail.com">mindscapesdu@gmail.com</a>.' +
+            '</div>' +
+          '</article>';
+        });
+        archiveContainer.innerHTML = archiveHtml;
+      } else {
+        archiveContainer.innerHTML = '<div style="padding: 2.5rem; text-align: center; color: #64748b; font-family: var(--font-sans); background: var(--card-bg); border: 1px dashed var(--border-color); border-radius: 6px; margin-bottom: 2rem;">' +
+          '<p style="margin: 0; font-size: 0.96rem;">No sessions have concluded yet. Archived talk materials and session recordings will appear here following each colloquium.</p>' +
+        '</div>';
+      }
+    }
+
+    // Function to dynamically render Literature & Handouts in readings.html
+    function initDynamicReadings(talks) {
+      var readingsContainer = document.getElementById('readings-container');
+      if (!readingsContainer || !Array.isArray(talks)) return;
+
+      var sorted = [...talks].sort(function (a, b) { return (b.session_number || 0) - (a.session_number || 0); });
+      var hasAnyReading = false;
+      var readingsHtml = '';
+
+      sorted.forEach(function (talk) {
+        if (talk.reading_url || talk.paper_url || talk.handout_url || talk.reading_title) {
+          hasAnyReading = true;
+          var isUpcoming = talk.status === 'active' || talk.status === 'upcoming';
+          var badgeText = isUpcoming ? 'Active Preparation' : 'Archived Readings';
+          var badgeClass = isUpcoming ? 'upcoming' : 'completed';
+
+          var buttonsHtml = '';
+          if (talk.paper_url) {
+            buttonsHtml += '<a href="' + escapeHtml(talk.paper_url) + '" target="_blank" rel="noopener noreferrer" class="btn ' + (isUpcoming ? 'btn-gold' : 'btn-secondary') + ' btn-sm" style="margin-right: 0.5rem; margin-bottom: 0.5rem;">Download Paper (PDF) &darr;</a>';
+          }
+          if (talk.handout_url) {
+            buttonsHtml += '<a href="' + escapeHtml(talk.handout_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="margin-right: 0.5rem; margin-bottom: 0.5rem;">Download Handout (PDF) &darr;</a>';
+          }
+          if (talk.reading_url && talk.reading_url !== talk.paper_url && talk.reading_url !== talk.handout_url) {
+            buttonsHtml += '<a href="' + escapeHtml(talk.reading_url) + '" target="_blank" rel="noopener noreferrer" class="btn ' + (isUpcoming && !talk.paper_url ? 'btn-gold' : 'btn-secondary') + ' btn-sm" style="margin-bottom: 0.5rem;">Prep Reading (PDF) &darr;</a>';
+          }
+
+          var citation = talk.reading_title || (talk.speaker_name + ' \u2014 "' + talk.title + '"');
+          var context = talk.abstract ? (talk.abstract.length > 280 ? talk.abstract.substring(0, 280) + '...' : talk.abstract) : 'Preparatory reading material for Session ' + (talk.session_number || '') + '.';
+
+          readingsHtml += '<section class="reading-module" id="session-' + (talk.session_number || '') + '">' +
+            '<div class="reading-module-header">' +
+              '<span class="status-badge ' + badgeClass + '" style="float: right;">' + badgeText + '</span>' +
+              '<h3>Session ' + (talk.session_number || '') + ': ' + escapeHtml(talk.speaker_name) + (talk.date_display ? ' (' + escapeHtml(talk.date_display) + ')' : '') + '</h3>' +
+            '</div>' +
+            '<article class="reading-card">' +
+              '<div class="reading-details">' +
+                '<div class="reading-citation"><strong>' + escapeHtml(citation) + '</strong></div>' +
+                '<p class="reading-context">' + escapeHtml(context) + '</p>' +
+              '</div>' +
+              '<div>' + buttonsHtml + '</div>' +
+            '</article>' +
+          '</section>';
+        }
+      });
+
+      if (hasAnyReading) {
+        readingsContainer.innerHTML = readingsHtml;
+      } else {
+        readingsContainer.innerHTML = '<div style="padding: 2.5rem; text-align: center; color: #64748b; font-family: var(--font-sans); background: var(--card-bg); border: 1px dashed var(--border-color); border-radius: 6px;">' +
+          '<p style="margin: 0; font-size: 0.96rem;">Preparatory readings and handouts for upcoming colloquium dates are currently being compiled. Please check back prior to each session.</p>' +
+        '</div>';
       }
     }
 

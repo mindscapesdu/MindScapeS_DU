@@ -7,6 +7,9 @@
   <title>Reading List | MindScapeS Frontier Talk Series on Cognition • University of Delhi</title>
   <meta name="description"
     content="Preparatory reading list, academic papers, and lecture handouts for the MindScapeS Frontier Talk Series on Cognition, University of Delhi.">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <link rel="icon" href="Images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/style.css?v=3.3">
 </head>
@@ -59,81 +62,10 @@
           participants to read in advance and for the Q&A sessions.</p>
       </section>
 
-      <!-- ===== SESSION 2 LITERATURE ===== -->
-      <section class="reading-module" id="session-2">
-        <div class="reading-module-header">
-          <span class="status-badge upcoming" style="float: right;">Active Preparation</span>
-          <h3>Session 2: Prof. Susanna Schellenberg (Nov 6, 2026)</h3>
-        </div>
-
-        <article class="reading-card">
-          <div class="reading-details">
-            <div class="reading-citation">
-              <strong>Schellenberg, Susanna.</strong> &ldquo;The Flexibility and Stability of Perspectives.&rdquo;
-              <em>Proceedings of the Aristotelian Society</em>.
-            </div>
-            <p class="reading-context">
-              Develops an account of active versus dormant perspectives informed by cognitive psychology, neuroscience,
-              and philosophy of mind. Discusses how perspectives shift through self-concept anchors within broader
-              cognitive schemas.
-            </p>
-          </div>
-          <div>
-            <a href="Papers and Handouts/Schellenberg-FlexibiltyStabilityPerspectives-AristSoc.pdf" target="_blank"
-              rel="noopener noreferrer" class="btn btn-gold btn-sm">
-              Download Paper (PDF) &darr;
-            </a>
-          </div>
-        </article>
-      </section>
-
-      <!-- ===== SESSION 1 LITERATURE ===== -->
-      <section class="reading-module" id="session-1">
-        <div class="reading-module-header">
-          <span class="status-badge completed" style="float: right;">Archived Readings</span>
-          <h3>Session 1: Prof. Melissa M. Kibbe (Oct 30, 2026)</h3>
-        </div>
-
-        <!-- Handout -->
-        <article class="reading-card">
-          <div class="reading-details">
-            <div class="reading-citation">
-              <strong>Kibbe, Melissa M.</strong> &ldquo;Minimal Object Representations in the Infant Mind.&rdquo;
-              Handout for the Language of Thought Series, Department of Philosophy, University of Delhi.
-            </div>
-            <p class="reading-context">
-              Session handout introducing object-file tracking, feature binding constraints, and developmental evidence
-              in early infant working memory.
-            </p>
-          </div>
-          <div>
-            <a href="Papers and Handouts/Kibbe Handout LoTSeries UDelhi.pdf" target="_blank" rel="noopener noreferrer"
-              class="btn btn-secondary btn-sm">
-              Download Handout (PDF) &darr;
-            </a>
-          </div>
-        </article>
-
-        <!-- Journal Article -->
-        <article class="reading-card">
-          <div class="reading-details">
-            <div class="reading-citation">
-              <strong>Kibbe, Melissa M., &amp; Leslie, Alan M. (2026).</strong> &ldquo;Working Memory Representations
-              and Object File Tracking in Infancy.&rdquo; <em>Evolution and Human Behavior</em>.
-            </div>
-            <p class="reading-context">
-              Empirical and theoretical investigation into infant working memory systems, evolutionary foundations of
-              object tracking, and cognitive architecture.
-            </p>
-          </div>
-          <div>
-            <a href="Papers and Handouts/2026-KibbeLeslie-EvolHumanBeh.pdf" target="_blank" rel="noopener noreferrer"
-              class="btn btn-secondary btn-sm">
-              Download Paper (PDF) &darr;
-            </a>
-          </div>
-        </article>
-      </section>
+      <!-- ===== DYNAMIC LITERATURE MODULES ===== -->
+      <div id="readings-container">
+        <!-- Rendered dynamically from Supabase database by js/session.js -->
+      </div>
 
       <!-- Notice on Access & Discussion Forum -->
       <section class="mailing-callout">
@@ -177,7 +109,7 @@
     </div>
   </footer>
 
-  <script src="js/session.js?v=3.6"></script>
+  <script src="js/session.js?v=4.0"></script>
 </body>
 
 </html>
