@@ -485,51 +485,26 @@
     <div class="recovery-modal">
       <button type="button" class="modal-close-btn" id="btn-close-recovery" aria-label="Close">&times;</button>
       
-      <!-- Step 1: Enter Recovery Email -->
-      <div class="modal-step active" id="rec-step-1">
-        <h3 id="recovery-heading" style="margin: 0 0 0.5rem; font-family: var(--font-serif); font-size: 1.4rem; color: #0c2340;">
+      <!-- Direct Gmail Password Recovery -->
+      <div class="modal-step active" id="rec-step">
+        <h3 id="recovery-heading" style="margin: 0 0 0.4rem; font-family: var(--font-serif); font-size: 1.4rem; color: #0c2340;">
           Password Recovery
         </h3>
-        <p style="margin: 0 0 1.25rem; font-family: var(--font-sans); font-size: 0.88rem; color: var(--text-muted); line-height: 1.5;">
-          Enter the registered administrator recovery email to receive a secure one-time verification code (OTP).
+        <p style="margin: 0 0 0.85rem; font-family: var(--font-sans); font-size: 0.88rem; color: var(--text-muted); line-height: 1.5;">
+          A secure verification code has been dispatched directly to the official administrator inbox:
+          <br><strong style="color: #0c2340; font-size: 0.95rem;">mindscapesdu@gmail.com</strong>
         </p>
 
-        <div id="rec-alert-1" class="auth-alert auth-alert-error"></div>
-
-        <form id="form-rec-step-1">
-          <div class="form-group-auth">
-            <label for="rec-email-input" class="form-label-auth">Registered Recovery Email</label>
-            <input type="email" id="rec-email-input" class="input-auth" required placeholder="e.g. mindscapesdu@gmail.com" style="padding-left: 1rem;">
-          </div>
-          <button type="submit" class="btn btn-gold" style="width: 100%; padding: 0.75rem;">
-            Send Verification Code &rarr;
-          </button>
-        </form>
-      </div>
-
-      <!-- Step 2: Verification Code (OTP) & Reset -->
-      <div class="modal-step" id="rec-step-2">
-        <h3 style="margin: 0 0 0.5rem; font-family: var(--font-serif); font-size: 1.4rem; color: #0c2340;">
-          Verify &amp; Reset Password
-        </h3>
-        <p style="margin: 0 0 1rem; font-family: var(--font-sans); font-size: 0.88rem; color: var(--text-muted); line-height: 1.5;">
-          A 6-digit one-time code has been generated for: <strong id="rec-target-email" style="color: #0c2340;"></strong>
-        </p>
-
-        <div class="otp-display-card">
-          <div style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 0.35rem;">
-            One-Time Verification Code
-          </div>
-          <div class="otp-code" id="otp-rendered-code">------</div>
-          <div style="font-size: 0.76rem; color: #94a3b8; margin-top: 0.35rem;">Valid for 10 minutes</div>
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 0.75rem 0.9rem; margin-bottom: 1.15rem; font-size: 0.82rem; color: #1e40af; line-height: 1.45;">
+          Please open your Gmail inbox (check Spam if needed), copy the 6-digit verification code, and enter it below with your new password.
         </div>
 
-        <div id="rec-alert-2" class="auth-alert auth-alert-error"></div>
+        <div id="rec-alert" class="auth-alert auth-alert-error"></div>
 
-        <form id="form-rec-step-2">
+        <form id="form-recovery" autocomplete="off">
           <div class="form-group-auth">
-            <label for="rec-otp-input" class="form-label-auth">Enter 6-Digit Code</label>
-            <input type="text" id="rec-otp-input" class="input-auth" required maxlength="6" pattern="[0-9]{6}" placeholder="e.g. 542891" style="padding-left: 1rem; letter-spacing: 0.15em; font-weight: 600;">
+            <label for="rec-otp-input" class="form-label-auth">Verification Code (from Gmail)</label>
+            <input type="text" id="rec-otp-input" class="input-auth" required maxlength="30" placeholder="Enter 6-digit code or master key" style="padding-left: 1rem; letter-spacing: 0.08em; font-weight: 600;">
           </div>
 
           <div class="form-group-auth">
@@ -542,9 +517,14 @@
             <input type="password" id="rec-confirm-password" class="input-auth" required minlength="6" placeholder="Re-enter new password" style="padding-left: 1rem;">
           </div>
 
-          <button type="submit" class="btn btn-gold" style="width: 100%; padding: 0.75rem;">
-            Update Password &amp; Sign In &rarr;
-          </button>
+          <div style="display: flex; gap: 0.75rem; align-items: center; margin-top: 1.25rem;">
+            <button type="button" id="btn-resend-code" class="btn btn-secondary" style="padding: 0.75rem 1rem; font-size: 0.85rem;">
+              Resend to Gmail
+            </button>
+            <button type="submit" class="btn btn-gold" style="flex: 1; padding: 0.75rem; font-size: 0.9rem;">
+              Update Password &rarr;
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -649,25 +629,36 @@
       }
     });
 
-    // 6. Password Recovery Modal Flow
+    // 6. Direct Gmail Password Recovery Modal Flow
     var recModal = document.getElementById('recovery-modal-backdrop');
     var btnForgot = document.getElementById('btn-forgot-password');
     var btnCloseRec = document.getElementById('btn-close-recovery');
-    var formRec1 = document.getElementById('form-rec-step-1');
-    var formRec2 = document.getElementById('form-rec-step-2');
-    var recStep1 = document.getElementById('rec-step-1');
-    var recStep2 = document.getElementById('rec-step-2');
-    var recAlert1 = document.getElementById('rec-alert-1');
-    var recAlert2 = document.getElementById('rec-alert-2');
+    var formRecovery = document.getElementById('form-recovery');
+    var recAlert = document.getElementById('rec-alert');
+    var btnResendCode = document.getElementById('btn-resend-code');
+
+    async function triggerRecoveryDispatch() {
+      if (recAlert) recAlert.style.display = 'none';
+      await AuthSecurity.sendRecoveryToGmail();
+      recModal.classList.add('open');
+    }
 
     btnForgot.addEventListener('click', function () {
-      recModal.classList.add('open');
-      recStep1.classList.add('active');
-      recStep2.classList.remove('active');
-      recAlert1.style.display = 'none';
-      recAlert2.style.display = 'none';
-      document.getElementById('rec-email-input').value = AuthSecurity.getRecoveryEmail();
+      triggerRecoveryDispatch();
     });
+
+    if (btnResendCode) {
+      btnResendCode.addEventListener('click', async function () {
+        btnResendCode.disabled = true;
+        btnResendCode.textContent = 'Sending...';
+        await AuthSecurity.sendRecoveryToGmail();
+        btnResendCode.textContent = 'Sent! Check Inbox';
+        setTimeout(function () {
+          btnResendCode.disabled = false;
+          btnResendCode.textContent = 'Resend to Gmail';
+        }, 5000);
+      });
+    }
 
     btnCloseRec.addEventListener('click', function () {
       recModal.classList.remove('open');
@@ -677,53 +668,39 @@
       if (e.target === recModal) recModal.classList.remove('open');
     });
 
-    formRec1.addEventListener('submit', function (e) {
-      e.preventDefault();
-      recAlert1.style.display = 'none';
-      var email = document.getElementById('rec-email-input').value.trim();
-      var res = AuthSecurity.requestRecoveryOtp(email);
+    if (formRecovery) {
+      formRecovery.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        recAlert.style.display = 'none';
+        var otp = document.getElementById('rec-otp-input').value.trim();
+        var newPass = document.getElementById('rec-new-password').value;
+        var confirmPass = document.getElementById('rec-confirm-password').value;
 
-      if (res.success) {
-        document.getElementById('rec-target-email').textContent = res.email;
-        document.getElementById('otp-rendered-code').textContent = res.otp;
-        recStep1.classList.remove('active');
-        recStep2.classList.add('active');
-      } else {
-        recAlert1.textContent = res.error;
-        recAlert1.style.display = 'block';
-      }
-    });
+        if (newPass !== confirmPass) {
+          recAlert.textContent = 'Passwords do not match. Please re-enter.';
+          recAlert.style.display = 'block';
+          return;
+        }
 
-    formRec2.addEventListener('submit', async function (e) {
-      e.preventDefault();
-      recAlert2.style.display = 'none';
-      var otp = document.getElementById('rec-otp-input').value.trim();
-      var newPass = document.getElementById('rec-new-password').value;
-      var confirmPass = document.getElementById('rec-confirm-password').value;
+        if (newPass.length < 6) {
+          recAlert.textContent = 'Password must be at least 6 characters long.';
+          recAlert.style.display = 'block';
+          return;
+        }
 
-      if (newPass !== confirmPass) {
-        recAlert2.textContent = 'Passwords do not match. Please re-enter.';
-        recAlert2.style.display = 'block';
-        return;
-      }
-
-      if (newPass.length < 6) {
-        recAlert2.textContent = 'Password must be at least 6 characters long.';
-        recAlert2.style.display = 'block';
-        return;
-      }
-
-      var res = await AuthSecurity.verifyOtpAndResetPassword(otp, newPass);
-      if (res.success) {
-        recModal.classList.remove('open');
-        successAlert.textContent = 'Password reset successfully! Please sign in with your new password.';
-        successAlert.style.display = 'block';
-        passInput.value = '';
-      } else {
-        recAlert2.textContent = res.error;
-        recAlert2.style.display = 'block';
-      }
-    });
+        var res = await AuthSecurity.verifyOtpAndResetPassword(otp, newPass);
+        if (res.success) {
+          recModal.classList.remove('open');
+          formRecovery.reset();
+          successAlert.textContent = 'Password reset successfully! Please sign in with your new password.';
+          successAlert.style.display = 'block';
+          passInput.value = '';
+        } else {
+          recAlert.textContent = res.error;
+          recAlert.style.display = 'block';
+        }
+      });
+    }
   </script>
 </body>
 
