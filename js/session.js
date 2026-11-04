@@ -599,6 +599,47 @@
 
       // 3. Dynamic Upcoming Archival Banner (archive.html)
       initDynamicArchive(talks);
+
+      // 4. Dynamic Homepage Colloquium Poster (index.html)
+      initDynamicPoster(talks);
+    }
+
+    // Function to dynamically update Homepage Series Poster
+    function initDynamicPoster(talks) {
+      var posterWrap = document.getElementById('homepage-poster-wrap');
+      var posterImg = document.getElementById('homepage-poster-img');
+      var posterLink = document.getElementById('homepage-poster-link');
+      if (!posterWrap || !posterImg) return;
+
+      var posterUrl = null;
+
+      // Check remote talks table for config-homepage-poster
+      if (Array.isArray(talks)) {
+        var posterConf = talks.find(function (t) { return t.id === 'config-homepage-poster'; });
+        if (posterConf && posterConf.reading_url) {
+          posterUrl = posterConf.reading_url;
+        }
+      }
+
+      // Check localStorage fallback
+      if (!posterUrl) {
+        try {
+          var raw = localStorage.getItem('mindscapes_homepage_poster');
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            if (parsed && parsed.url) posterUrl = parsed.url;
+          }
+        } catch (e) {}
+      }
+
+      if (posterUrl) {
+        posterImg.src = posterUrl;
+        if (posterLink) posterLink.href = posterUrl;
+        posterWrap.style.display = 'block';
+      } else {
+        posterWrap.style.display = 'none';
+        posterImg.src = '';
+      }
     }
 
     // Function to dynamically update Archive Upcoming Banner
@@ -619,6 +660,7 @@
       }
     }
 
+    initDynamicPoster(null);
     var cached = localStorage.getItem('mindscapes_talks');
     if (cached) {
       try { applyData(JSON.parse(cached)); } catch (e) {}
