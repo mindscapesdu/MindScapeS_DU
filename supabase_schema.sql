@@ -138,3 +138,41 @@ CREATE TRIGGER update_talks_updated_at
     BEFORE UPDATE ON public.talks
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
+
+-- =============================================================================
+-- PART 3: Supabase Storage Buckets & Policies (Posters, Papers, Handouts)
+-- =============================================================================
+
+-- 10. Create 'readings' and 'posters' public storage buckets if missing
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('readings', 'readings', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('posters', 'posters', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- 11. Allow public access to view storage objects
+DROP POLICY IF EXISTS "Public read storage objects" ON storage.objects;
+CREATE POLICY "Public read storage objects"
+ON storage.objects
+FOR SELECT
+TO anon
+USING (bucket_id IN ('readings', 'posters'));
+
+-- 12. Allow public upload to storage objects
+DROP POLICY IF EXISTS "Public upload storage objects" ON storage.objects;
+CREATE POLICY "Public upload storage objects"
+ON storage.objects
+FOR INSERT
+TO anon
+WITH CHECK (bucket_id IN ('readings', 'posters'));
+
+-- 13. Allow public update to storage objects
+DROP POLICY IF EXISTS "Public update storage objects" ON storage.objects;
+CREATE POLICY "Public update storage objects"
+ON storage.objects
+FOR UPDATE
+TO anon
+USING (bucket_id IN ('readings', 'posters'));
+

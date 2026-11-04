@@ -55,7 +55,7 @@
   try {
     localStorage.removeItem('mindscapes_registration');
     localStorage.removeItem('mindscapes_reg_id');
-  } catch (e) {}
+  } catch (e) { }
 
   if (regForm) {
     regForm.addEventListener('submit', function (e) {
@@ -228,8 +228,8 @@
   function ensureModalExists(talk) {
     var modalId = 'modal-' + talk.id;
     var existing = document.getElementById(modalId);
-    var paragraphs = (talk.abstract || '').split('\n\n').filter(function(p) { return p.trim().length > 0; });
-    var abstractHtml = paragraphs.map(function(p) { return '<p style="font-size: 0.96rem; line-height: 1.65; margin-bottom: 0.85rem;">' + escapeHtml(p) + '</p>'; }).join('') || '<p>Abstract in preparation.</p>';
+    var paragraphs = (talk.abstract || '').split('\n\n').filter(function (p) { return p.trim().length > 0; });
+    var abstractHtml = paragraphs.map(function (p) { return '<p style="font-size: 0.96rem; line-height: 1.65; margin-bottom: 0.85rem;">' + escapeHtml(p) + '</p>'; }).join('') || '<p>Abstract in preparation.</p>';
 
     var readingHtml = '';
     if (talk.reading_url) {
@@ -283,10 +283,11 @@
 
     function renderDynamicTable(talks) {
       if (!Array.isArray(talks) || talks.length === 0) return;
-      talks.sort(function (a, b) { return (a.session_number || 0) - (b.session_number || 0); });
+      var schedTalks = talks.filter(function(t) { return t.id !== 'config-homepage-poster' && !t.id.startsWith('config-'); });
+      schedTalks.sort(function (a, b) { return (a.session_number || 0) - (b.session_number || 0); });
 
       var newRowsHtml = '';
-      talks.forEach(function (talk) {
+      schedTalks.forEach(function (talk) {
         var timeHtml = escapeHtml(talk.time_display || '').replace(/\n/g, '<br>');
 
         // Filter out any format line containing TBA
@@ -321,19 +322,19 @@
 
         newRowsHtml += '<tr>' +
           '<td>' +
-            '<div class="sched-date">' + escapeHtml(talk.date_display) + '</div>' +
-            '<div class="sched-time">' + timeHtml + '</div>' +
+          '<div class="sched-date">' + escapeHtml(talk.date_display) + '</div>' +
+          '<div class="sched-time">' + timeHtml + '</div>' +
           '</td>' +
           '<td>' +
-            '<strong class="sched-speaker-name">' + escapeHtml(talk.speaker_name) + '</strong>' +
-            (talk.speaker_affiliation ? '<span class="sched-affiliation">' + escapeHtml(talk.speaker_affiliation) + '</span>' : '') +
+          '<strong class="sched-speaker-name">' + escapeHtml(talk.speaker_name) + '</strong>' +
+          (talk.speaker_affiliation ? '<span class="sched-affiliation">' + escapeHtml(talk.speaker_affiliation) + '</span>' : '') +
           '</td>' +
           '<td>' +
-            '<div class="sched-talk-title">' + escapeHtml(talk.title) + '</div>' +
+          '<div class="sched-talk-title">' + escapeHtml(talk.title) + '</div>' +
           '</td>' +
           '<td>' + formatHtml + '</td>' +
           '<td>' + actionsHtml + '</td>' +
-        '</tr>';
+          '</tr>';
 
         if (talk.has_abstract) {
           ensureModalExists(talk);
@@ -406,7 +407,7 @@
         if (Array.isArray(parsed) && parsed.length > 0) {
           renderDynamicTable(parsed);
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     // 2. Fetch live updates from Supabase
@@ -433,13 +434,14 @@
   function initDynamicVisuals() {
     function applyData(talks) {
       if (!Array.isArray(talks) || talks.length === 0) return;
+      var realTalks = talks.filter(function (t) { return t.id !== 'config-homepage-poster' && !t.id.startsWith('config-'); });
 
       // 1. Dynamic Homepage Spotlight Card (index.html)
       var spotlightCard = document.querySelector('.spotlight-card');
       if (spotlightCard) {
-        var activeTalk = talks.find(function(t) { return t.status === 'active'; }) ||
-                         talks.find(function(t) { return t.has_register; }) ||
-                         talks[0];
+        var activeTalk = realTalks.find(function (t) { return t.status === 'active'; }) ||
+          realTalks.find(function (t) { return t.has_register; }) ||
+          realTalks[0];
 
         if (activeTalk) {
           var badgeEl = spotlightCard.querySelector('.spotlight-badge');
@@ -472,8 +474,8 @@
 
           var abstractEl = spotlightCard.querySelector('.abstract-content');
           if (abstractEl && activeTalk.abstract) {
-            var paras = activeTalk.abstract.split('\n\n').filter(function(p) { return p.trim().length > 0; });
-            abstractEl.innerHTML = paras.map(function(p, i) {
+            var paras = activeTalk.abstract.split('\n\n').filter(function (p) { return p.trim().length > 0; });
+            abstractEl.innerHTML = paras.map(function (p, i) {
               return '<p>' + (i === 0 ? '<strong>Abstract:</strong> ' : '') + escapeHtml(p) + '</p>';
             }).join('');
           }
@@ -501,9 +503,9 @@
       // 2. Dynamic Keynote Speakers Grid (speakers.html)
       var speakersGrid = document.getElementById('keynote-speakers-grid') || document.querySelector('.speakers-grid');
       if (speakersGrid && document.querySelector('.page-hero-title')?.textContent.includes('Speakers')) {
-        var sorted = [...talks].sort(function(a, b) { return (a.session_number || 0) - (b.session_number || 0); });
+        var sorted = [...realTalks].sort(function (a, b) { return (a.session_number || 0) - (b.session_number || 0); });
         var gridHtml = '';
-        sorted.forEach(function(talk) {
+        sorted.forEach(function (talk) {
           var initials = (talk.speaker_name || '')
             .replace(/^(prof\.|dr\.|ms\.|mr\.)\s*/i, '')
             .split(' ')
@@ -523,15 +525,15 @@
           gridHtml += '<article class="speaker-profile-card">' +
             '<div class="speaker-avatar-wrap">' + avatarHtml + '</div>' +
             '<div class="speaker-card-body">' +
-              '<span class="speaker-role-pill">' + roleLabel + '</span>' +
-              '<h3 class="speaker-name">' + escapeHtml(talk.speaker_name) + '</h3>' +
-              '<div class="speaker-affiliation">' + escapeHtml(talk.speaker_affiliation || '') + '</div>' +
-              (talk.speaker_bio ? '<p class="subtext" style="margin-top: 0.75rem; font-size: 0.88rem; line-height: 1.55;">' + escapeHtml(talk.speaker_bio) + '</p>' : (talk.abstract ? '<p class="subtext" style="margin-top: 0.75rem; font-size: 0.88rem; line-height: 1.5;">' + escapeHtml(talk.abstract.substring(0, 160)) + '...</p>' : '')) +
-              '<div class="speaker-talk-topic" style="margin-top: 0.85rem;">' +
-                '<strong>Talk:</strong> <em>' + escapeHtml(talk.title || '') + '</em>' +
-              '</div>' +
+            '<span class="speaker-role-pill">' + roleLabel + '</span>' +
+            '<h3 class="speaker-name">' + escapeHtml(talk.speaker_name) + '</h3>' +
+            '<div class="speaker-affiliation">' + escapeHtml(talk.speaker_affiliation || '') + '</div>' +
+            (talk.speaker_bio ? '<p class="subtext" style="margin-top: 0.75rem; font-size: 0.88rem; line-height: 1.55;">' + escapeHtml(talk.speaker_bio) + '</p>' : (talk.abstract ? '<p class="subtext" style="margin-top: 0.75rem; font-size: 0.88rem; line-height: 1.5;">' + escapeHtml(talk.abstract.substring(0, 160)) + '...</p>' : '')) +
+            '<div class="speaker-talk-topic" style="margin-top: 0.85rem;">' +
+            '<strong>Talk:</strong> <em>' + escapeHtml(talk.title || '') + '</em>' +
             '</div>' +
-          '</article>';
+            '</div>' +
+            '</article>';
         });
         speakersGrid.innerHTML = gridHtml;
       }
@@ -543,7 +545,7 @@
         try {
           var commRaw = localStorage.getItem('mindscapes_commentators');
           if (commRaw) commData = JSON.parse(commRaw);
-        } catch (e) {}
+        } catch (e) { }
 
         if (!Array.isArray(commData) || commData.length === 0) {
           commData = [
@@ -559,7 +561,7 @@
           ];
         } else {
           // Ensure dummy test records are removed
-          commData = commData.filter(function(c) { return c.id !== 'comm-2' && c.name !== 'Prof. Tarun'; });
+          commData = commData.filter(function (c) { return c.id !== 'comm-2' && c.name !== 'Prof. Tarun'; });
         }
 
         var commHtml = '';
@@ -580,13 +582,13 @@
           commHtml += '<article class="speaker-profile-card">' +
             '<div class="speaker-avatar-wrap">' + avatarHtml + '</div>' +
             '<div class="speaker-card-body">' +
-              '<span class="speaker-role-pill commentator">' + (comm.role_pill || 'Commentator') + '</span>' +
-              '<h3 class="speaker-name">' + escapeHtml(comm.name) + '</h3>' +
-              '<div class="speaker-affiliation">' + (comm.affiliation || '') + '</div>' +
-              (comm.bio ? '<p class="subtext" style="margin-bottom: 1.15rem;">' + escapeHtml(comm.bio) + '</p>' : '') +
-              (comm.topic ? '<div class="speaker-talk-topic" style="border-left-color: #92400e;"><strong>Commentary on:</strong> ' + escapeHtml(comm.topic) + '</div>' : '') +
+            '<span class="speaker-role-pill commentator">' + (comm.role_pill || 'Commentator') + '</span>' +
+            '<h3 class="speaker-name">' + escapeHtml(comm.name) + '</h3>' +
+            '<div class="speaker-affiliation">' + (comm.affiliation || '') + '</div>' +
+            (comm.bio ? '<p class="subtext" style="margin-bottom: 1.15rem;">' + escapeHtml(comm.bio) + '</p>' : '') +
+            (comm.topic ? '<div class="speaker-talk-topic" style="border-left-color: #92400e;"><strong>Commentary on:</strong> ' + escapeHtml(comm.topic) + '</div>' : '') +
             '</div>' +
-          '</article>';
+            '</article>';
         });
         commentatorsGrid.innerHTML = commHtml;
       }
@@ -627,7 +629,7 @@
             var parsed = JSON.parse(raw);
             if (parsed && parsed.url) posterUrl = parsed.url;
           }
-        } catch (e) {}
+        } catch (e) { }
       }
 
       if (posterUrl) {
@@ -645,7 +647,8 @@
       var banner = document.getElementById('archive-upcoming-banner');
       if (!banner || !Array.isArray(talks)) return;
 
-      var sorted = [...talks].sort(function (a, b) { return (a.session_number || 0) - (b.session_number || 0); });
+      var realTalks = talks.filter(function (t) { return t.id !== 'config-homepage-poster' && !t.id.startsWith('config-'); });
+      var sorted = [...realTalks].sort(function (a, b) { return (a.session_number || 0) - (b.session_number || 0); });
       var nextSession = sorted.find(function (t) { return t.status === 'active' || t.status === 'upcoming'; });
 
       if (nextSession) {
@@ -663,7 +666,7 @@
       var archiveContainer = document.getElementById('archived-sessions-container');
       if (!archiveContainer || !Array.isArray(talks)) return;
 
-      var concludedTalks = talks.filter(function (t) { return t.status === 'concluded'; });
+      var concludedTalks = talks.filter(function (t) { return t.status === 'concluded' && t.id !== 'config-homepage-poster'; });
       concludedTalks.sort(function (a, b) { return (a.session_number || 0) - (b.session_number || 0); });
 
       if (concludedTalks.length > 0) {
@@ -673,24 +676,24 @@
           if (talk.handout_url) {
             materialsList.push(
               '<li style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.92rem;">' +
-                '<span><strong>Speaker Handout:</strong> <em>' + escapeHtml(talk.speaker_name) + ' &bull; MindScapeS Colloquium</em></span>' +
-                '<a href="' + escapeHtml(talk.handout_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Download Handout (PDF)</a>' +
+              '<span><strong>Speaker Handout:</strong> <em>' + escapeHtml(talk.speaker_name) + ' &bull; MindScapeS Colloquium</em></span>' +
+              '<a href="' + escapeHtml(talk.handout_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Download Handout (PDF)</a>' +
               '</li>'
             );
           }
           if (talk.paper_url) {
             materialsList.push(
               '<li style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.92rem;' + (materialsList.length > 0 ? ' border-top: 1px solid #eae5de; padding-top: 0.65rem;' : '') + '">' +
-                '<span><strong>Research Paper:</strong> ' + escapeHtml(talk.reading_title || talk.title) + '</span>' +
-                '<a href="' + escapeHtml(talk.paper_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Download Paper (PDF)</a>' +
+              '<span><strong>Research Paper:</strong> ' + escapeHtml(talk.reading_title || talk.title) + '</span>' +
+              '<a href="' + escapeHtml(talk.paper_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Download Paper (PDF)</a>' +
               '</li>'
             );
           }
           if (talk.reading_url && talk.reading_url !== talk.paper_url && talk.reading_url !== talk.handout_url) {
             materialsList.push(
               '<li style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.92rem;' + (materialsList.length > 0 ? ' border-top: 1px solid #eae5de; padding-top: 0.65rem;' : '') + '">' +
-                '<span><strong>Prep Reading:</strong> ' + escapeHtml(talk.reading_title || talk.title) + '</span>' +
-                '<a href="' + escapeHtml(talk.reading_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Download Prep Reading (PDF)</a>' +
+              '<span><strong>Prep Reading:</strong> ' + escapeHtml(talk.reading_title || talk.title) + '</span>' +
+              '<a href="' + escapeHtml(talk.reading_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Download Prep Reading (PDF)</a>' +
               '</li>'
             );
           }
@@ -700,9 +703,9 @@
             materialsBox = '<div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 4px; padding: 1.25rem 1.5rem; margin: 1.5rem 0;">' +
               '<h4 style="margin: 0 0 0.75rem; font-family: var(--font-serif); font-size: 1.1rem; color: var(--accent-color);">Session Materials &amp; Artifacts</h4>' +
               '<ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.65rem;">' +
-                materialsList.join('') +
+              materialsList.join('') +
               '</ul>' +
-            '</div>';
+              '</div>';
           }
 
           var commentatorLine = '';
@@ -717,8 +720,8 @@
 
           archiveHtml += '<article class="session-card" id="session-' + (talk.session_number || '') + '">' +
             '<div class="session-card-header">' +
-              '<span class="status-badge completed">Concluded &bull; Session ' + (talk.session_number || '') + '</span>' +
-              '<span class="subtext">Held on ' + escapeHtml(talk.date_display) + (talk.time_display ? ' &bull; ' + escapeHtml(talk.time_display) : '') + '</span>' +
+            '<span class="status-badge completed">Concluded &bull; Session ' + (talk.session_number || '') + '</span>' +
+            '<span class="subtext">Held on ' + escapeHtml(talk.date_display) + (talk.time_display ? ' &bull; ' + escapeHtml(talk.time_display) : '') + '</span>' +
             '</div>' +
             '<h3 class="session-title">' + escapeHtml(talk.title) + '</h3>' +
             '<div class="session-speaker-line">Speaker: ' + escapeHtml(talk.speaker_name) + (talk.speaker_affiliation ? ' (' + escapeHtml(talk.speaker_affiliation) + ')' : '') + '</div>' +
@@ -726,15 +729,15 @@
             abstractHtml +
             materialsBox +
             '<div class="subtext" style="margin-top: 1rem;">' +
-              '<em>Note on Recordings:</em> For scholarly inquiries regarding audio/video archives or discussion transcripts, please email <a href="mailto:mindscapesdu@gmail.com">mindscapesdu@gmail.com</a>.' +
+            '<em>Note on Recordings:</em> For scholarly inquiries regarding audio/video archives or discussion transcripts, please email <a href="mailto:mindscapesdu@gmail.com">mindscapesdu@gmail.com</a>.' +
             '</div>' +
-          '</article>';
+            '</article>';
         });
         archiveContainer.innerHTML = archiveHtml;
       } else {
         archiveContainer.innerHTML = '<div style="padding: 2.5rem; text-align: center; color: #64748b; font-family: var(--font-sans); background: var(--card-bg); border: 1px dashed var(--border-color); border-radius: 6px; margin-bottom: 2rem;">' +
           '<p style="margin: 0; font-size: 0.96rem;">No sessions have concluded yet. Archived talk materials and session recordings will appear here following each colloquium.</p>' +
-        '</div>';
+          '</div>';
       }
     }
 
@@ -743,7 +746,8 @@
       var readingsContainer = document.getElementById('readings-container');
       if (!readingsContainer || !Array.isArray(talks)) return;
 
-      var sorted = [...talks].sort(function (a, b) { return (b.session_number || 0) - (a.session_number || 0); });
+      var readTalks = talks.filter(function (t) { return t.id !== 'config-homepage-poster' && !t.id.startsWith('config-'); });
+      var sorted = [...readTalks].sort(function (a, b) { return (b.session_number || 0) - (a.session_number || 0); });
       var hasAnyReading = false;
       var readingsHtml = '';
 
@@ -770,17 +774,17 @@
 
           readingsHtml += '<section class="reading-module" id="session-' + (talk.session_number || '') + '">' +
             '<div class="reading-module-header">' +
-              '<span class="status-badge ' + badgeClass + '" style="float: right;">' + badgeText + '</span>' +
-              '<h3>Session ' + (talk.session_number || '') + ': ' + escapeHtml(talk.speaker_name) + (talk.date_display ? ' (' + escapeHtml(talk.date_display) + ')' : '') + '</h3>' +
+            '<span class="status-badge ' + badgeClass + '" style="float: right;">' + badgeText + '</span>' +
+            '<h3>Session ' + (talk.session_number || '') + ': ' + escapeHtml(talk.speaker_name) + (talk.date_display ? ' (' + escapeHtml(talk.date_display) + ')' : '') + '</h3>' +
             '</div>' +
             '<article class="reading-card">' +
-              '<div class="reading-details">' +
-                '<div class="reading-citation"><strong>' + escapeHtml(citation) + '</strong></div>' +
-                '<p class="reading-context">' + escapeHtml(context) + '</p>' +
-              '</div>' +
-              '<div>' + buttonsHtml + '</div>' +
+            '<div class="reading-details">' +
+            '<div class="reading-citation"><strong>' + escapeHtml(citation) + '</strong></div>' +
+            '<p class="reading-context">' + escapeHtml(context) + '</p>' +
+            '</div>' +
+            '<div>' + buttonsHtml + '</div>' +
             '</article>' +
-          '</section>';
+            '</section>';
         }
       });
 
@@ -789,14 +793,14 @@
       } else {
         readingsContainer.innerHTML = '<div style="padding: 2.5rem; text-align: center; color: #64748b; font-family: var(--font-sans); background: var(--card-bg); border: 1px dashed var(--border-color); border-radius: 6px;">' +
           '<p style="margin: 0; font-size: 0.96rem;">Preparatory readings and handouts for upcoming colloquium dates are currently being compiled. Please check back prior to each session.</p>' +
-        '</div>';
+          '</div>';
       }
     }
 
     initDynamicPoster(null);
     var cached = localStorage.getItem('mindscapes_talks');
     if (cached) {
-      try { applyData(JSON.parse(cached)); } catch (e) {}
+      try { applyData(JSON.parse(cached)); } catch (e) { }
     }
 
     if (SUPABASE_CONFIG.url) {

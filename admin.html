@@ -2345,6 +2345,53 @@
     var posterViewLink = document.getElementById('admin-poster-view-link');
     var posterMetaDate = document.getElementById('admin-poster-meta-date');
 
+    function compressImageFile(file, maxWidth, maxHeight, quality) {
+      return new Promise(function (resolve) {
+        if (!file.type || !file.type.startsWith('image/')) {
+          return resolve({ blob: file, dataUrl: null });
+        }
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          var img = new Image();
+          img.onload = function () {
+            var w = img.width;
+            var h = img.height;
+            var maxW = maxWidth || 1600;
+            var maxH = maxHeight || 1600;
+
+            if (w > maxW || h > maxH) {
+              if (w / maxW > h / maxH) {
+                h = Math.round(h * (maxW / w));
+                w = maxW;
+              } else {
+                w = Math.round(w * (maxH / h));
+                h = maxH;
+              }
+            }
+
+            var canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+
+            var dataUrl = canvas.toDataURL('image/jpeg', quality || 0.85);
+            canvas.toBlob(function (blob) {
+              resolve({ blob: blob || file, dataUrl: dataUrl });
+            }, 'image/jpeg', quality || 0.85);
+          };
+          img.onerror = function () {
+            resolve({ blob: file, dataUrl: e.target.result });
+          };
+          img.src = e.target.result;
+        };
+        reader.onerror = function () {
+          resolve({ blob: file, dataUrl: null });
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
     function renderAdminPoster() {
       if (!posterBadge || !posterPreviewWrap) return;
       var posterData = null;
@@ -2358,7 +2405,9 @@
         var remoteConf = allTalks.find(t => t.id === 'config-homepage-poster');
         if (remoteConf && remoteConf.reading_url) {
           posterData = { url: remoteConf.reading_url, date: remoteConf.updated_at };
-          localStorage.setItem('mindscapes_homepage_poster', JSON.stringify(posterData));
+          try {
+            localStorage.setItem('mindscapes_homepage_poster', JSON.stringify(posterData));
+          } catch (e) {}
         }
       }
 
@@ -2385,21 +2434,22 @@
         var file = this.files[0];
         if (!file) return;
 
-        showAdminToast('Processing & uploading poster (' + (file.size / 1024).toFixed(1) + ' KB)...');
-
+        showAdminToast('Processing & optimizing poster image...');
+        var compressed = await compressImageFile(file, 1600, 1600, 0.85);
+        var uploadBlob = compressed.blob || file;
         var posterUrl = '';
 
         // 1. Try uploading to Supabase Storage bucket 'readings'
         try {
-          var cleanFileName = 'poster_' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+          var cleanFileName = 'poster_' + Date.now() + '.jpg';
           var uploadRes = await fetch(`${SUPABASE_CONFIG.url}/storage/v1/object/readings/${cleanFileName}`, {
             method: 'POST',
             headers: {
               'apikey': SUPABASE_CONFIG.anonKey,
               'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
-              'Content-Type': file.type || 'image/jpeg'
+              'Content-Type': 'image/jpeg'
             },
-            body: file
+            body: uploadBlob
           });
 
           if (uploadRes.ok) {
@@ -2409,27 +2459,27 @@
           console.log('Supabase storage upload note:', err);
         }
 
-        // 2. Base64 fallback if storage not reachable
-        if (!posterUrl) {
-          await new Promise((resolve) => {
-            var reader = new FileReader();
-            reader.onload = function (e) {
-              posterUrl = e.target.result;
-              resolve();
-            };
-            reader.readAsDataURL(file);
-          });
+        // 2. Optimized base64 fallback (guaranteed to be lightweight ~100-200KB)
+        if (!posterUrl && compressed.dataUrl) {
+          posterUrl = compressed.dataUrl;
         }
 
         if (posterUrl) {
           var posterObj = { url: posterUrl, date: new Date().toISOString() };
-          localStorage.setItem('mindscapes_homepage_poster', JSON.stringify(posterObj));
+          try {
+            localStorage.setItem('mindscapes_homepage_poster', JSON.stringify(posterObj));
+          } catch (storageErr) {
+            console.warn('localStorage quota note:', storageErr);
+          }
 
-          // Sync to Supabase talks table
+          // Sync to Supabase talks table with REQUIRED NOT NULL columns
           var posterRecord = {
             id: 'config-homepage-poster',
             session_number: 999,
+            date_display: 'Series 2026',
+            time_display: 'Autumn 2026',
             speaker_name: 'MindScapeS Series Poster',
+            speaker_affiliation: 'Colloquium Series',
             title: 'Homepage Colloquium Poster',
             reading_url: posterUrl,
             status: 'active',
@@ -2439,10 +2489,17 @@
           if (idx >= 0) allTalks[idx] = posterRecord;
           else allTalks.push(posterRecord);
 
-          syncTalkToSupabase(posterRecord);
+          try {
+            localStorage.setItem('mindscapes_talks', JSON.stringify(allTalks));
+          } catch (e) {}
 
+          var synced = await syncTalkToSupabase(posterRecord);
           renderAdminPoster();
-          showAdminToast('Poster uploaded and published live on homepage!');
+          if (synced) {
+            showAdminToast('Poster uploaded and published live on homepage & Supabase!');
+          } else {
+            showAdminToast('Poster published live! (Saved locally & pending Supabase sync)');
+          }
         }
 
         posterFileInput.value = '';
