@@ -94,11 +94,14 @@ CREATE TABLE IF NOT EXISTS public.talks (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
--- Ensure Zoom columns exist if table was already created
+-- Ensure Zoom and media columns exist if table was already created
 ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS zoom_link TEXT;
 ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS zoom_meeting_id TEXT;
 ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS zoom_passcode TEXT;
 ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS zoom_instructions TEXT;
+ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS paper_url TEXT;
+ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS handout_url TEXT;
+ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS speaker_bio TEXT;
 
 -- 8. Enable Row Level Security (RLS) on talks
 ALTER TABLE public.talks ENABLE ROW LEVEL SECURITY;
