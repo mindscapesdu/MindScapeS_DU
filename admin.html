@@ -1917,7 +1917,7 @@
       });
     }
 
-    // Generic PDF upload handler (Cloud Storage + Base64 fallback)
+    // Generic PDF upload handler (Cloud Storage + Safe Size Handling)
     function setupPdfUpload(fileInputId, urlInputId, statusElId, label) {
       var fileInput = document.getElementById(fileInputId);
       var urlInput = document.getElementById(urlInputId);
@@ -1928,11 +1928,13 @@
         var file = this.files[0];
         if (!file) return;
 
-        if (statusEl) statusEl.textContent = 'Processing ' + file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)...';
+        if (statusEl) statusEl.textContent = 'Uploading ' + file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB) to Supabase Storage...';
 
         // 1. Try uploading to Supabase Storage bucket 'readings'
+        var cleanFileName = Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        var uploadedUrl = null;
+
         try {
-          var cleanFileName = Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
           var uploadRes = await fetch(`${SUPABASE_CONFIG.url}/storage/v1/object/readings/${cleanFileName}`, {
             method: 'POST',
             headers: {
@@ -1944,24 +1946,39 @@
           });
 
           if (uploadRes.ok) {
-            var publicUrl = `${SUPABASE_CONFIG.url}/storage/v1/object/public/readings/${cleanFileName}`;
-            urlInput.value = publicUrl;
-            if (statusEl) statusEl.textContent = 'Uploaded to Cloud Storage: ' + file.name;
-            showAdminToast(label + ' uploaded to Supabase Storage!');
+            uploadedUrl = `${SUPABASE_CONFIG.url}/storage/v1/object/public/readings/${cleanFileName}`;
+            urlInput.value = uploadedUrl;
+            if (statusEl) statusEl.innerHTML = '<span style="color: #16a34a; font-weight: 600;">✓ Uploaded to Cloud Storage:</span> ' + escapeHtml(file.name);
+            showAdminToast(label + ' uploaded to Supabase Storage successfully!');
             return;
+          } else {
+            var errData = await uploadRes.json().catch(function () { return {}; });
+            var errMsg = errData.message || errData.error || ('HTTP ' + uploadRes.status);
+            console.warn('Supabase storage upload returned:', errMsg);
+            if (statusEl) {
+              statusEl.innerHTML = '<span style="color: #dc2626;">Storage Notice:</span> ' + escapeHtml(errMsg) + '. (Run SQL script in Supabase)';
+            }
+            showAdminToast('Storage notice: ' + errMsg + '. Please run the SQL in Supabase SQL Editor.', 6000);
           }
         } catch (err) {
-          console.log('Supabase storage attempt note:', err);
+          console.warn('Supabase storage connection error:', err);
         }
 
-        // 2. Base64 fallback (works everywhere instantly)
-        var reader = new FileReader();
-        reader.onload = function (e) {
-          urlInput.value = e.target.result;
-          if (statusEl) statusEl.textContent = 'Ready to save (' + (file.size / 1024).toFixed(1) + ' KB): ' + file.name;
-          showAdminToast(label + ' processed and ready to save!');
-        };
-        reader.readAsDataURL(file);
+        // 2. Safe Base64 fallback (only for compact files under 800 KB to prevent localStorage crashes)
+        if (file.size <= 800 * 1024) {
+          var reader = new FileReader();
+          reader.onload = function (e) {
+            urlInput.value = e.target.result;
+            if (statusEl) statusEl.innerHTML = '<span style="color: #b45309;">Attached locally (' + (file.size / 1024).toFixed(1) + ' KB):</span> ' + escapeHtml(file.name);
+            showAdminToast(label + ' attached. Click Save to publish.');
+          };
+          reader.readAsDataURL(file);
+        } else {
+          if (statusEl) {
+            statusEl.innerHTML = '<span style="color: #dc2626; font-weight: 600;">File is ' + (file.size / (1024 * 1024)).toFixed(1) + ' MB.</span> Run the SQL script in Supabase to enable Cloud Storage, or paste an external PDF link above.';
+          }
+          showAdminToast('File is ' + (file.size / (1024 * 1024)).toFixed(1) + ' MB. Please run the SQL script in Supabase to enable Storage.', 6000);
+        }
       });
     }
 
@@ -2261,7 +2278,11 @@
       if (idx >= 0) allTalks[idx] = talkData;
       else allTalks.push(talkData);
 
-      localStorage.setItem('mindscapes_talks', JSON.stringify(allTalks));
+      try {
+        localStorage.setItem('mindscapes_talks', JSON.stringify(allTalks));
+      } catch (quotaErr) {
+        console.warn('localStorage quota note:', quotaErr);
+      }
       renderTalksTable();
       closeTalkModal();
 
