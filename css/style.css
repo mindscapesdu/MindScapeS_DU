@@ -687,6 +687,18 @@ main {
   border-color: var(--accent-gold-hover);
 }
 
+.btn-zoom {
+  background-color: #1e5a96;
+  border-color: #1e5a96;
+  color: #ffffff !important;
+}
+
+.btn-zoom:hover {
+  background-color: #154270;
+  border-color: #154270;
+  color: #ffffff !important;
+}
+
 .btn-secondary {
   display: inline-flex;
   align-items: center;
@@ -1074,7 +1086,8 @@ input:focus, select:focus, textarea:focus {
   }
 
   .btn-table-outline,
-  .btn-table-primary {
+  .btn-table-primary,
+  .btn-table-zoom {
     max-width: 95px;
     padding: 6px 6px;
     font-size: 0.78rem;
@@ -1335,6 +1348,31 @@ input:focus, select:focus, textarea:focus {
   border-color: #0a1827;
   color: #ffffff;
   text-decoration: none;
+}
+
+.btn-table-zoom {
+  display: block;
+  width: 100%;
+  max-width: 105px;
+  padding: 6px 8px;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #ffffff !important;
+  background-color: #1e5a96;
+  border: 1px solid #1e5a96;
+  border-radius: 2px;
+  text-decoration: none !important;
+  text-align: center;
+  line-height: 1.25;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-table-zoom:hover {
+  background-color: #154270;
+  border-color: #154270;
+  color: #ffffff !important;
 }
 
 .sched-empty-action {

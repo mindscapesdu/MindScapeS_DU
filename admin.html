@@ -398,6 +398,62 @@
       flex-shrink: 0;
     }
 
+    /* Speaker Cards Grid in Admin */
+    .admin-speaker-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .admin-speaker-card {
+      background: #ffffff;
+      border: 1px solid var(--admin-border);
+      border-radius: 8px;
+      padding: 1.35rem 1.45rem;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .admin-speaker-card:hover {
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+      border-color: #cbd5e1;
+    }
+
+    .admin-speaker-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .admin-speaker-photo {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      object-fit: cover;
+      object-position: center 20%;
+      border: 2px solid var(--admin-gold);
+      flex-shrink: 0;
+    }
+
+    .admin-speaker-mono {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      color: #334155;
+      font-weight: 700;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
     .talk-status-badge {
       display: inline-block;
       font-size: 0.72rem;
@@ -708,6 +764,16 @@
         <span>Talks &amp; Colloquia</span>
       </button>
 
+      <button class="admin-tab-btn" data-tab="tab-speakers">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <span>Speaker Profile Cards</span>
+      </button>
+
       <button class="admin-tab-btn" data-tab="tab-security">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
@@ -792,7 +858,26 @@
       </div>
     </div>
 
-    <!-- ==================== TAB 2: SECURITY & RECOVERY SETTINGS ==================== -->
+    <!-- ==================== TAB 2: SPEAKER PROFILE CARDS ==================== -->
+    <div class="tab-content-panel" id="tab-speakers">
+      <div class="section-title-bar">
+        <div>
+          <h2 class="admin-section-heading">Speaker Profile Cards Directory</h2>
+          <p class="admin-section-sub">
+            Customize speaker photos, research biographies, academic affiliations, and talk topics shown on the public Speakers page and throughout the website.
+          </p>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+          <input type="text" id="admin-speaker-search" class="search-input-admin" placeholder="Filter speakers..." style="width: 250px;">
+        </div>
+      </div>
+
+      <div class="admin-speaker-cards-grid" id="admin-speaker-cards-container">
+        <!-- Rendered dynamically by JavaScript -->
+      </div>
+    </div>
+
+    <!-- ==================== TAB 3: SECURITY & RECOVERY SETTINGS ==================== -->
     <div class="tab-content-panel" id="tab-security">
       <div class="settings-grid">
         <!-- Recovery Email Card -->
@@ -904,6 +989,11 @@
             <img id="speaker-img-preview" src="" alt="Speaker Preview" style="width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid #cbd5e1; display: none;">
             <span id="speaker-img-note" style="font-size: 0.82rem; color: #64748b;">No image loaded</span>
           </div>
+        </div>
+
+        <div style="margin-top: 1rem;">
+          <label for="edit-speaker-bio" class="field-label-admin">Speaker Research Biography (Shown on Speakers Page)</label>
+          <textarea id="edit-speaker-bio" class="field-input-admin" rows="3" placeholder="Enter research biography, academic background, laboratory focus..."></textarea>
         </div>
 
         <div style="margin-top: 1rem;">
@@ -1224,6 +1314,7 @@
         delete cleanTalk.zoom_meeting_id;
         delete cleanTalk.zoom_passcode;
         delete cleanTalk.zoom_instructions;
+        delete cleanTalk.speaker_bio;
 
         var retryPatch = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?id=eq.${encodeURIComponent(talk.id)}`, {
           method: 'PATCH',
@@ -1370,6 +1461,107 @@
         `;
         tbody.appendChild(tr);
       });
+
+      renderSpeakerCards();
+    }
+
+    // 5b. Render Speaker Profile Cards in Admin Tab
+    function renderSpeakerCards(filter) {
+      var container = document.getElementById('admin-speaker-cards-container');
+      if (!container) return;
+
+      var term = (filter || '').toLowerCase();
+      var filtered = allTalks.filter(function (t) {
+        if (!term) return true;
+        return (t.speaker_name && t.speaker_name.toLowerCase().includes(term)) ||
+               (t.speaker_affiliation && t.speaker_affiliation.toLowerCase().includes(term)) ||
+               (t.title && t.title.toLowerCase().includes(term));
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div style="grid-column: 1 / -1; padding: 2.5rem; text-align: center; color: #64748b; background: #ffffff; border-radius: 8px; border: 1px dashed #cbd5e1;">No speaker cards match your search.</div>';
+        return;
+      }
+
+      var html = '';
+      filtered.forEach(function (talk) {
+        var initials = (talk.speaker_name || '')
+          .replace(/^(prof\.|dr\.|ms\.|mr\.)\s*/i, '')
+          .split(' ')
+          .filter(Boolean)
+          .map(w => w[0])
+          .slice(0, 2)
+          .join('')
+          .toUpperCase() || 'SP';
+
+        var avatarHtml = talk.speaker_image
+          ? `<img src="${talk.speaker_image}" class="admin-speaker-photo" alt="${talk.speaker_name}">`
+          : `<div class="admin-speaker-mono">${initials}</div>`;
+
+        var bioSnippet = talk.speaker_bio
+          ? escapeHtml(talk.speaker_bio)
+          : '<em style="color: #94a3b8;">No bio description added. Click &ldquo;Edit Speaker Profile&rdquo; to add research bio.</em>';
+
+        html += `
+          <div class="admin-speaker-card">
+            <div>
+              <div class="admin-speaker-header">
+                ${avatarHtml}
+                <div>
+                  <div style="font-family: var(--font-sans); font-size: 0.74rem; text-transform: uppercase; font-weight: 700; color: var(--admin-gold); letter-spacing: 0.05em;">
+                    Session #${talk.session_number} &bull; ${escapeHtml(talk.date_display || '')}
+                  </div>
+                  <h3 style="margin: 0.15rem 0 0.25rem; font-family: var(--font-serif); font-size: 1.15rem; color: var(--admin-navy);">
+                    ${escapeHtml(talk.speaker_name || 'Unnamed Speaker')}
+                  </h3>
+                  <div style="font-family: var(--font-sans); font-size: 0.84rem; color: #64748b;">
+                    ${escapeHtml(talk.speaker_affiliation || 'No affiliation listed')}
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin: 0.75rem 0; padding: 0.65rem 0.85rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+                <div style="font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 0.2rem;">Talk Topic</div>
+                <div style="font-family: var(--font-serif); font-size: 0.9rem; font-style: italic; color: #1e293b; line-height: 1.35;">
+                  ${escapeHtml(talk.title || 'Topic TBA')}
+                </div>
+              </div>
+
+              <div style="margin: 0.75rem 0;">
+                <div style="font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 0.25rem;">Speaker Profile / Bio</div>
+                <div style="font-family: var(--font-sans); font-size: 0.84rem; color: #334155; line-height: 1.5; max-height: 85px; overflow: hidden; text-overflow: ellipsis;">
+                  ${bioSnippet}
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 1rem; padding-top: 0.85rem; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 0.78rem; color: ${talk.speaker_image ? '#16a34a' : '#d97706'}; font-weight: 600;">
+                ${talk.speaker_image ? '✓ Portrait Attached' : '○ Initials Monogram'}
+              </span>
+              <button type="button" class="action-btn-admin edit" data-edit-speaker="${talk.id}" style="padding: 0.45rem 0.9rem; font-size: 0.82rem; cursor: pointer;">
+                Edit Speaker Profile &rarr;
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+
+      container.querySelectorAll('[data-edit-speaker]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-edit-speaker');
+          openTalkEditor(id);
+        });
+      });
+    }
+
+    var speakerSearchInput = document.getElementById('admin-speaker-search');
+    if (speakerSearchInput) {
+      speakerSearchInput.addEventListener('input', function () {
+        renderSpeakerCards(this.value.trim());
+      });
     }
 
     // 6. Search & Filter Listeners
@@ -1481,6 +1673,7 @@
       document.getElementById('edit-talk-affiliation').value = talk.speaker_affiliation || '';
       document.getElementById('edit-speaker-img-url').value = talk.speaker_image || '';
       updateSpeakerPreview(talk.speaker_image || '');
+      document.getElementById('edit-speaker-bio').value = talk.speaker_bio || '';
       document.getElementById('edit-talk-title-input').value = talk.title || '';
       document.getElementById('edit-talk-format').value = talk.format_commentators || '';
       document.getElementById('edit-talk-abstract').value = talk.abstract || '';
@@ -1511,6 +1704,7 @@
       document.getElementById('edit-talk-affiliation').value = '';
       document.getElementById('edit-speaker-img-url').value = '';
       updateSpeakerPreview('');
+      document.getElementById('edit-speaker-bio').value = '';
       document.getElementById('edit-talk-title-input').value = '';
       document.getElementById('edit-talk-format').value = 'Talk\nStudent-First Q&A\nOpen Q&A';
       document.getElementById('edit-talk-abstract').value = '';
@@ -1554,6 +1748,7 @@
       var speaker = document.getElementById('edit-talk-speaker').value.trim();
       var affil = document.getElementById('edit-talk-affiliation').value.trim();
       var img = document.getElementById('edit-speaker-img-url').value.trim();
+      var bio = document.getElementById('edit-speaker-bio').value.trim();
       var title = document.getElementById('edit-talk-title-input').value.trim();
       var format = document.getElementById('edit-talk-format').value.trim();
       var abstract = document.getElementById('edit-talk-abstract').value.trim();
@@ -1575,6 +1770,7 @@
         speaker_name: speaker,
         speaker_affiliation: affil,
         speaker_image: img,
+        speaker_bio: bio,
         title: title,
         format_commentators: format,
         abstract: abstract,

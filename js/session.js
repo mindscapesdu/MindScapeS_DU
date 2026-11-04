@@ -317,6 +317,11 @@
 
         var actionsHtml = '<span class="sched-empty-action">&mdash;</span>';
         var actionBtns = [];
+        if (talk.zoom_link) {
+          actionBtns.push('<a href="' + escapeHtml(talk.zoom_link) + '" target="_blank" rel="noopener noreferrer" class="btn-table-zoom">Join Zoom</a>');
+        } else if (talk.status === 'active' || talk.id === 'session-2') {
+          actionBtns.push('<a href="https://us04web.zoom.us/launch/jc/78997015908" target="_blank" rel="noopener noreferrer" class="btn-table-zoom">Join Zoom</a>');
+        }
         if (talk.has_abstract) {
           actionBtns.push('<button type="button" class="btn-table-outline" data-modal-target="modal-' + escapeHtml(talk.id) + '">View Abstract</button>');
         }
@@ -489,6 +494,11 @@
           var actionsEl = spotlightCard.querySelector('.spotlight-actions');
           if (actionsEl) {
             var btns = [];
+            if (activeTalk.zoom_link) {
+              btns.push('<a href="' + escapeHtml(activeTalk.zoom_link) + '" target="_blank" rel="noopener noreferrer" class="btn btn-zoom" id="spotlight-zoom-btn">Join Zoom Meeting &rarr;</a>');
+            } else if (activeTalk.status === 'active' || activeTalk.id === 'session-2') {
+              btns.push('<a href="https://us04web.zoom.us/launch/jc/78997015908" target="_blank" rel="noopener noreferrer" class="btn btn-zoom" id="spotlight-zoom-btn">Join Zoom Meeting &rarr;</a>');
+            }
             if (activeTalk.has_register || activeTalk.status === 'active') {
               btns.push('<a href="schedule.html#register" class="btn btn-gold">Register for Session ' + (activeTalk.session_number || '') + '</a>');
             }
@@ -529,10 +539,10 @@
               '<span class="speaker-role-pill">' + roleLabel + '</span>' +
               '<h3 class="speaker-name">' + escapeHtml(talk.speaker_name) + '</h3>' +
               '<div class="speaker-affiliation">' + escapeHtml(talk.speaker_affiliation || '') + '</div>' +
+              (talk.speaker_bio ? '<p class="subtext" style="margin-top: 0.75rem; font-size: 0.88rem; line-height: 1.55;">' + escapeHtml(talk.speaker_bio) + '</p>' : (talk.abstract ? '<p class="subtext" style="margin-top: 0.75rem; font-size: 0.88rem; line-height: 1.5;">' + escapeHtml(talk.abstract.substring(0, 160)) + '...</p>' : '')) +
               '<div class="speaker-talk-topic" style="margin-top: 0.85rem;">' +
                 '<strong>Talk:</strong> <em>' + escapeHtml(talk.title || '') + '</em>' +
               '</div>' +
-              (talk.abstract ? '<p class="subtext" style="margin-top: 0.75rem; font-size: 0.88rem; line-height: 1.5;">' + escapeHtml(talk.abstract.substring(0, 160)) + '...</p>' : '') +
             '</div>' +
           '</article>';
         });
