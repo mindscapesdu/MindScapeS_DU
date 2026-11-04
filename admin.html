@@ -1196,6 +1196,47 @@
 
     async function syncTalkToSupabase(talk) {
       try {
+        // 1. Try PATCH first for existing records (instant update by id)
+        var patchRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?id=eq.${encodeURIComponent(talk.id)}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_CONFIG.anonKey,
+            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(talk)
+        });
+
+        if (patchRes.ok) {
+          var patched = await patchRes.json();
+          if (Array.isArray(patched) && patched.length > 0) return true;
+        }
+
+        // 2. If PATCH failed (e.g. unknown column like zoom_instructions in DB), retry without optional zoom fields
+        var cleanTalk = Object.assign({}, talk);
+        delete cleanTalk.zoom_link;
+        delete cleanTalk.zoom_meeting_id;
+        delete cleanTalk.zoom_passcode;
+        delete cleanTalk.zoom_instructions;
+
+        var retryPatch = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?id=eq.${encodeURIComponent(talk.id)}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_CONFIG.anonKey,
+            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(cleanTalk)
+        });
+
+        if (retryPatch.ok) {
+          var retried = await retryPatch.json();
+          if (Array.isArray(retried) && retried.length > 0) return true;
+        }
+
+        // 3. If record doesn't exist yet, do POST upsert
         var res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?on_conflict=id`, {
           method: 'POST',
           headers: {
@@ -1206,8 +1247,24 @@
           },
           body: JSON.stringify(talk)
         });
-        return res.ok;
+
+        if (res.ok) return true;
+
+        // 4. Fallback clean POST if zoom columns not present in Supabase table
+        var retryPost = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?on_conflict=id`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_CONFIG.anonKey,
+            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+            'Prefer': 'resolution=merge-duplicates'
+          },
+          body: JSON.stringify(cleanTalk)
+        });
+
+        return retryPost.ok;
       } catch (e) {
+        console.error('Supabase sync error:', e);
         return false;
       }
     }
