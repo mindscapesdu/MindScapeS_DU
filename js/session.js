@@ -674,17 +674,19 @@
         concludedTalks.forEach(function (talk) {
           var materialsList = [];
           if (talk.handout_url) {
+            var hTitle = talk.handout_title || ('Speaker Handout: ' + talk.speaker_name + ' \u2022 MindScapeS Colloquium');
             materialsList.push(
               '<li style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.92rem;">' +
-              '<span><strong>Speaker Handout:</strong> <em>' + escapeHtml(talk.speaker_name) + ' &bull; MindScapeS Colloquium</em></span>' +
+              '<span><strong>Handout:</strong> <em>' + escapeHtml(hTitle) + '</em></span>' +
               '<a href="' + escapeHtml(talk.handout_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Download Handout (PDF)</a>' +
               '</li>'
             );
           }
           if (talk.paper_url) {
+            var pTitle = talk.paper_title || talk.reading_title || talk.title;
             materialsList.push(
               '<li style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.92rem;' + (materialsList.length > 0 ? ' border-top: 1px solid #eae5de; padding-top: 0.65rem;' : '') + '">' +
-              '<span><strong>Research Paper:</strong> ' + escapeHtml(talk.reading_title || talk.title) + '</span>' +
+              '<span><strong>Research Paper:</strong> ' + escapeHtml(pTitle) + '</span>' +
               '<a href="' + escapeHtml(talk.paper_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Download Paper (PDF)</a>' +
               '</li>'
             );

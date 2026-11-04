@@ -1481,13 +1481,15 @@
           if (Array.isArray(patched) && patched.length > 0) return true;
         }
 
-        // 2. If PATCH failed (e.g. unknown column like zoom_instructions in DB), retry without optional zoom fields
+        // 2. If PATCH failed (e.g. unknown column in DB), retry without optional fields
         var cleanTalk = Object.assign({}, talk);
         delete cleanTalk.zoom_link;
         delete cleanTalk.zoom_meeting_id;
         delete cleanTalk.zoom_passcode;
         delete cleanTalk.zoom_instructions;
         delete cleanTalk.speaker_bio;
+        delete cleanTalk.paper_title;
+        delete cleanTalk.handout_title;
 
         var retryPatch = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?id=eq.${encodeURIComponent(talk.id)}`, {
           method: 'PATCH',
@@ -1503,6 +1505,27 @@
         if (retryPatch.ok) {
           var retried = await retryPatch.json();
           if (Array.isArray(retried) && retried.length > 0) return true;
+        }
+
+        // 2b. Ultra-safe retry without paper_url/handout_url (fallback to standard reading_url)
+        var ultraCleanTalk = Object.assign({}, cleanTalk);
+        delete ultraCleanTalk.paper_url;
+        delete ultraCleanTalk.handout_url;
+
+        var ultraRetry = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?id=eq.${encodeURIComponent(talk.id)}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_CONFIG.anonKey,
+            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(ultraCleanTalk)
+        });
+
+        if (ultraRetry.ok) {
+          var ultraRetried = await ultraRetry.json();
+          if (Array.isArray(ultraRetried) && ultraRetried.length > 0) return true;
         }
 
         // 3. If record doesn't exist yet, do POST upsert

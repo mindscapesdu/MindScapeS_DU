@@ -99,7 +99,9 @@ ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS zoom_link TEXT;
 ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS zoom_meeting_id TEXT;
 ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS zoom_passcode TEXT;
 ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS zoom_instructions TEXT;
+ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS paper_title TEXT;
 ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS paper_url TEXT;
+ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS handout_title TEXT;
 ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS handout_url TEXT;
 ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS speaker_bio TEXT;
 
