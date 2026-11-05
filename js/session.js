@@ -542,10 +542,28 @@
       var commentatorsGrid = document.getElementById('commentators-grid');
       if (commentatorsGrid) {
         var commData = null;
-        try {
-          var commRaw = localStorage.getItem('mindscapes_commentators');
-          if (commRaw) commData = JSON.parse(commRaw);
-        } catch (e) { }
+
+        // 1. Try fetching live commentators from Supabase talks table (config-commentators)
+        if (Array.isArray(talks)) {
+          var commConf = talks.find(function (t) { return t.id === 'config-commentators'; });
+          if (commConf && commConf.abstract) {
+            try {
+              var parsedRemote = JSON.parse(commConf.abstract);
+              if (Array.isArray(parsedRemote) && parsedRemote.length > 0) {
+                commData = parsedRemote;
+                try { localStorage.setItem('mindscapes_commentators', JSON.stringify(commData)); } catch (e) { }
+              }
+            } catch (e) { }
+          }
+        }
+
+        // 2. Fallback to localStorage
+        if (!commData) {
+          try {
+            var commRaw = localStorage.getItem('mindscapes_commentators');
+            if (commRaw) commData = JSON.parse(commRaw);
+          } catch (e) { }
+        }
 
         if (!Array.isArray(commData) || commData.length === 0) {
           commData = [

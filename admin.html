@@ -2198,8 +2198,27 @@
       if (e.target === commModal) closeCommentatorModal();
     });
 
+    async function syncCommentatorsToSupabase() {
+      var record = {
+        id: 'config-commentators',
+        session_number: 998,
+        date_display: 'Config',
+        time_display: 'Config',
+        speaker_name: 'MindScapeS Commentators Directory',
+        speaker_affiliation: 'Colloquium Directory',
+        title: 'Commentators Configuration',
+        abstract: JSON.stringify(allCommentators),
+        status: 'active',
+        updated_at: new Date().toISOString()
+      };
+      var idx = allTalks.findIndex(t => t.id === 'config-commentators');
+      if (idx >= 0) allTalks[idx] = record;
+      else allTalks.push(record);
+      return await syncTalkToSupabase(record);
+    }
+
     if (commForm) {
-      commForm.addEventListener('submit', function (e) {
+      commForm.addEventListener('submit', async function (e) {
         e.preventDefault();
         var id = document.getElementById('edit-comm-id').value;
         var name = document.getElementById('edit-comm-name').value.trim();
@@ -2226,18 +2245,26 @@
         localStorage.setItem('mindscapes_commentators', JSON.stringify(allCommentators));
         renderCommentatorCards();
         closeCommentatorModal();
-        showAdminToast('Commentator card saved successfully!');
+        showAdminToast('Saving commentator & syncing to Supabase...');
+        var ok = await syncCommentatorsToSupabase();
+        if (ok) {
+          showAdminToast('Commentator card synced live across all browsers via Supabase!');
+        } else {
+          showAdminToast('Commentator saved locally.');
+        }
       });
     }
 
-    function deleteCommentator(id) {
+    async function deleteCommentator(id) {
       var comm = allCommentators.find(c => c.id === id);
       if (!confirm(`Are you sure you want to remove commentator profile: ${comm?.name || ''}?`)) return;
 
       allCommentators = allCommentators.filter(c => c.id !== id);
       localStorage.setItem('mindscapes_commentators', JSON.stringify(allCommentators));
       renderCommentatorCards();
-      showAdminToast('Commentator profile removed.');
+      showAdminToast('Commentator removed. Syncing to Supabase...');
+      await syncCommentatorsToSupabase();
+      showAdminToast('Commentator profile removed across all browsers.');
     }
 
     // 8. Save Talk Form
@@ -2603,6 +2630,23 @@
       if (remote && remote.length > 0) {
         allTalks = remote;
         localStorage.setItem('mindscapes_talks', JSON.stringify(allTalks));
+
+        // Sync Commentators from Supabase
+        var remoteCommConf = remote.find(t => t.id === 'config-commentators');
+        if (remoteCommConf && remoteCommConf.abstract) {
+          try {
+            var parsedComms = JSON.parse(remoteCommConf.abstract);
+            if (Array.isArray(parsedComms) && parsedComms.length > 0) {
+              allCommentators = parsedComms;
+              localStorage.setItem('mindscapes_commentators', JSON.stringify(allCommentators));
+              renderCommentatorCards();
+            }
+          } catch (e) {}
+        } else if (allCommentators && allCommentators.length > 0) {
+          // If Supabase does not have commentators yet, seed Supabase from our local commentators
+          syncCommentatorsToSupabase();
+        }
+
         renderTalksTable();
         renderSpeakerCards();
         renderAdminPoster();
