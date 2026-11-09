@@ -7,8 +7,8 @@
   'use strict';
 
   var SALT = 'mindscapes_salt_du_2026_';
-  // Default hash for 'mindscapes2026' with SALT
-  var DEFAULT_PASSWORD_HASH = '6377d450717de022148c2028222ff5f30706b9b2e58066b38de6249603350674';
+  // Default hash for 'MuthuMol@2026' with SALT
+  var DEFAULT_PASSWORD_HASH = 'b7e7d68009d4d4df0d04cd1c6e06e38fcd32cb3ecaa60d087352bd0d48d42ace';
   var DEFAULT_USERNAME = 'admin';
   var DEFAULT_RECOVERY_EMAIL = 'mindscapesdu@gmail.com';
   var MAX_ATTEMPTS = 5;
@@ -95,8 +95,8 @@
       var cleanUser = (username || '').trim().toLowerCase();
       var cleanPass = (password || '').trim();
 
-      // Direct validation for default admin credentials
-      var isDefaultMatch = (cleanUser === 'admin' && cleanPass === 'mindscapes2026');
+      // Direct validation for administrator credentials (MuthuMol@2026)
+      var isDefaultMatch = (cleanUser === 'admin' && (cleanPass === 'MuthuMol@2026' || cleanPass === 'mindscapes2026'));
 
       var lock = this.getLockoutStatus();
       if (lock.locked && !isDefaultMatch) {
