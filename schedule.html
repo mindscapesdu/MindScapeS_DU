@@ -31,7 +31,8 @@
     </div>
     <div class="nav-bar">
       <div class="container-wide nav-bar-inner">
-        <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="main-nav" aria-label="Toggle navigation menu">
+        <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="main-nav"
+          aria-label="Toggle navigation menu">
           Menu &equiv;
         </button>
         <ul class="main-nav" id="main-nav">
@@ -57,7 +58,8 @@
       <section class="page-hero">
         <span class="page-hero-badge">Academic Calendar</span>
         <h2 class="page-hero-title">Colloquium Schedule</h2>
-        <p class="page-hero-lead">All sessions are held virtually via Zoom and are open to students, researchers, and faculty worldwide. Timings are listed in Indian Standard Time (IST, UTC+5:30).</p>
+        <p class="page-hero-lead">All sessions are held virtually via Zoom and are open to students, researchers, and
+          faculty worldwide. Timings are listed in Indian Standard Time (IST, UTC+5:30).</p>
       </section>
 
       <!-- ===== PROGRAMME 2026 TABLE ===== -->
@@ -65,17 +67,20 @@
         <div class="programme-header">
           <h2 class="programme-title">Programme 2026</h2>
           <p class="programme-subtitle">
-            The schedule is in preparation and may change. Click &ldquo;View Abstract&rdquo; to read talk summaries or &ldquo;Register&rdquo; to sign up for any session.
+            The schedule is in preparation and may change. Click &ldquo;View Abstract&rdquo; to read talk summaries or
+            &ldquo;Register&rdquo; to sign up for any session.
           </p>
         </div>
 
         <div class="table-scroll-hint">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"/>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6" />
           </svg>
           <span>Scroll horizontally to view complete schedule details</span>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="9 18 15 12 9 6"/>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6" />
           </svg>
         </div>
 
@@ -93,8 +98,10 @@
             <tbody>
               <!-- Rendered dynamically from Supabase database -->
               <tr>
-                <td colspan="5" style="text-align: center; padding: 3rem; color: #64748b; font-family: var(--font-sans);">
-                  <div style="font-weight: 600; font-size: 1rem; margin-bottom: 0.35rem;">Loading Colloquium Programme...</div>
+                <td colspan="5"
+                  style="text-align: center; padding: 3rem; color: #64748b; font-family: var(--font-sans);">
+                  <div style="font-weight: 600; font-size: 1rem; margin-bottom: 0.35rem;">Loading Colloquium
+                    Programme...</div>
                   <div style="font-size: 0.85rem; color: #94a3b8;">Syncing with live database</div>
                 </td>
               </tr>
@@ -107,23 +114,28 @@
       <section id="register" class="reg-section" style="max-width: 820px; margin: 3.5rem auto 4rem;">
         <div class="reg-card">
           <h2 id="reg-heading">Colloquium Registration</h2>
-          <p class="subtext" id="reg-subtext">Register below to receive session reminders and immediate Zoom credentials. Attendance is free and open to all.</p>
+          <p class="subtext" id="reg-subtext">Register below to receive session reminders and immediate Zoom
+            credentials. Attendance is free and open to all.</p>
 
           <div id="reg-form-wrap">
             <form id="session-reg-form" autocomplete="off">
               <div class="form-group">
                 <label for="reg-name">Full Name <span style="color: #dc2626;">*</span></label>
-                <input type="text" id="reg-name" name="name" required placeholder="e.g. Dr. A. Sharma" autocomplete="off">
+                <input type="text" id="reg-name" name="name" required placeholder="e.g. Dr. A. Sharma"
+                  autocomplete="off">
               </div>
 
               <div class="form-group">
                 <label for="reg-email">Email Address <span style="color: #dc2626;">*</span></label>
-                <input type="email" id="reg-email" name="email" required placeholder="name@institution.edu" autocomplete="off">
+                <input type="email" id="reg-email" name="email" required placeholder="name@institution.edu"
+                  autocomplete="off">
               </div>
 
               <div class="form-group">
-                <label for="reg-affiliation">Institutional Affiliation / University <span style="color: #dc2626;">*</span></label>
-                <input type="text" id="reg-affiliation" name="affiliation" required placeholder="e.g. University of Delhi / Rutgers University" autocomplete="off">
+                <label for="reg-affiliation">Institutional Affiliation / University <span
+                    style="color: #dc2626;">*</span></label>
+                <input type="text" id="reg-affiliation" name="affiliation" required
+                  placeholder="e.g. University of Delhi / Rutgers University" autocomplete="off">
               </div>
 
               <div class="form-group">
@@ -141,13 +153,17 @@
               <div class="form-group">
                 <label for="reg-session">Session Selection <span style="color: #dc2626;">*</span></label>
                 <select id="reg-session" name="sessions" required>
-                  <option value="Session 2: Friday, Nov 6 (8:00 AM IST) - Prof. Susanna Schellenberg" data-session-id="session-2" data-zoom-id="789 9701 5908" data-zoom-pass="cognition" data-zoom-link="https://us04web.zoom.us/launch/jc/78997015908" selected>Session 2: Friday, Nov 6 (8:00 AM IST) - Prof. Susanna Schellenberg</option>
+                  <option value="Session 2: Friday, Nov 6 (8:00 AM IST) - Prof. Susanna Schellenberg"
+                    data-session-id="session-2" data-zoom-id="789 9701 5908" data-zoom-pass="cognition"
+                    data-zoom-link="https://us04web.zoom.us/launch/jc/78997015908" selected>Session 2: Friday, Nov 6
+                    (8:00 AM IST) - Prof. Susanna Schellenberg</option>
                 </select>
               </div>
 
               <div class="form-group">
                 <label for="reg-remarks">Question for the Speaker or Remarks (Optional)</label>
-                <textarea id="reg-remarks" name="remarks" rows="3" placeholder="Optional notes, questions on the paper, or topic interests..."></textarea>
+                <textarea id="reg-remarks" name="remarks" rows="3"
+                  placeholder="Optional notes, questions on the paper, or topic interests..."></textarea>
               </div>
 
               <button type="submit" class="btn btn-gold" style="width: 100%;">Complete Registration &rarr;</button>
@@ -161,15 +177,18 @@
               <p>Thank you! Your registration details have been synchronized.</p>
               <div id="reg-confirm-details" style="margin: 1rem 0;"></div>
 
-              <div id="reg-zoom-info-container" style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid #c2dfcf;">
+              <div id="reg-zoom-info-container"
+                style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid #c2dfcf;">
                 <p style="margin: 0 0 0.4rem;"><strong>Direct Zoom Access Information:</strong></p>
                 <div id="conf-zoom-details">
                   <p style="margin: 0.2rem 0; font-family: var(--font-sans); font-size: 0.95rem;">
-                    Meeting ID: <strong id="conf-zoom-id">789 9701 5908</strong> &bull; Passcode: <strong id="conf-zoom-pass">cognition</strong>
+                    Meeting ID: <strong id="conf-zoom-id">789 9701 5908</strong> &bull; Passcode: <strong
+                      id="conf-zoom-pass">cognition</strong>
                   </p>
                   <p id="conf-zoom-note" style="margin: 0.25rem 0 0.6rem; font-size: 0.84rem; color: #57534e;"></p>
                   <p style="margin-top: 0.85rem;" id="conf-zoom-link-wrap">
-                    <a id="conf-zoom-link" href="https://us04web.zoom.us/launch/jc/78997015908" target="_blank" rel="noopener noreferrer" class="btn btn-zoom">
+                    <a id="conf-zoom-link" href="https://us04web.zoom.us/launch/jc/78997015908" target="_blank"
+                      rel="noopener noreferrer" class="btn btn-zoom">
                       Join Zoom Meeting Directly &rarr;
                     </a>
                   </p>
@@ -203,7 +222,8 @@
           <!-- <li><a href="about.html">About</a></li> -->
           <li><a href="contact.html">Contact</a></li>
         </ul>
-        <p style="margin-top: 1.25rem; font-size: 0.82rem; color: #a8a29e;">&copy; 2026 MindScapeS, Department of Philosophy, University of Delhi.</p>
+        <p style="margin-top: 1.25rem; font-size: 0.82rem; color: #a8a29e;">&copy; 2026 MindScapeS, Department of
+          Philosophy, University of Delhi.</p>
       </div>
     </div>
   </footer>
@@ -215,4 +235,3 @@
 </body>
 
 </html>
-
