@@ -596,36 +596,44 @@
     // 5. Handle Login Form Submit
     loginForm.addEventListener('submit', async function (e) {
       e.preventDefault();
-      errorAlert.style.display = 'none';
-      successAlert.style.display = 'none';
+      try {
+        errorAlert.style.display = 'none';
+        successAlert.style.display = 'none';
 
-      var username = document.getElementById('auth-username').value.trim();
-      var password = passInput.value;
-      var remember = document.getElementById('auth-remember').checked;
+        var username = document.getElementById('auth-username').value.trim();
+        var password = passInput.value;
+        var remember = document.getElementById('auth-remember').checked;
 
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span>Verifying Credentials...</span>';
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>Verifying Credentials...</span>';
 
-      var result = await AuthSecurity.login(username, password, remember);
+        var result = await AuthSecurity.login(username, password, remember);
 
-      if (result.success) {
-        successAlert.textContent = 'Authentication successful! Redirecting to Admin Dashboard...';
-        successAlert.style.display = 'block';
-        setTimeout(function () {
-          window.location.href = 'admin.html';
-        }, 600);
-      } else {
-        errorAlert.textContent = result.error;
+        if (result && result.success) {
+          successAlert.textContent = 'Authentication successful! Redirecting to Admin Dashboard...';
+          successAlert.style.display = 'block';
+          setTimeout(function () {
+            window.location.href = 'admin.html';
+          }, 200);
+        } else {
+          errorAlert.textContent = (result && result.error) || 'Invalid credentials. Please try again.';
+          errorAlert.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<span>Authorize Access</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+          
+          // Shake card feedback
+          var card = document.getElementById('auth-card');
+          card.style.transform = 'translateX(-6px)';
+          setTimeout(() => card.style.transform = 'translateX(6px)', 80);
+          setTimeout(() => card.style.transform = 'translateX(-4px)', 160);
+          setTimeout(() => card.style.transform = 'translateX(0)', 240);
+        }
+      } catch (err) {
+        console.error('Login submit error:', err);
+        errorAlert.textContent = 'An unexpected error occurred. Please retry.';
         errorAlert.style.display = 'block';
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<span>Authorize Access</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
-        
-        // Shake card feedback
-        var card = document.getElementById('auth-card');
-        card.style.transform = 'translateX(-6px)';
-        setTimeout(() => card.style.transform = 'translateX(6px)', 80);
-        setTimeout(() => card.style.transform = 'translateX(-4px)', 160);
-        setTimeout(() => card.style.transform = 'translateX(0)', 240);
+        submitBtn.innerHTML = '<span>Authorize Access</span>';
       }
     });
 
