@@ -508,10 +508,12 @@
 
     // 2. Fetch live updates from Supabase
     if (SUPABASE_CONFIG.url) {
-      fetch(SUPABASE_CONFIG.url + '/rest/v1/talks?select=*&order=session_number.asc', {
+      fetch(SUPABASE_CONFIG.url + '/rest/v1/talks?select=*&order=session_number.asc&_t=' + Date.now(), {
         headers: {
           'apikey': SUPABASE_CONFIG.anonKey,
-          'Authorization': 'Bearer ' + SUPABASE_CONFIG.anonKey
+          'Authorization': 'Bearer ' + SUPABASE_CONFIG.anonKey,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
         }
       }).then(function (res) {
         if (res.ok) return res.json();
@@ -1028,10 +1030,12 @@
     }
 
     if (SUPABASE_CONFIG.url) {
-      fetch(SUPABASE_CONFIG.url + '/rest/v1/talks?select=*&order=session_number.asc', {
+      fetch(SUPABASE_CONFIG.url + '/rest/v1/talks?select=*&order=session_number.asc&_t=' + Date.now(), {
         headers: {
           'apikey': SUPABASE_CONFIG.anonKey,
-          'Authorization': 'Bearer ' + SUPABASE_CONFIG.anonKey
+          'Authorization': 'Bearer ' + SUPABASE_CONFIG.anonKey,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
         }
       }).then(function (res) {
         if (res.ok) return res.json();

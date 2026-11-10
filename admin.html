@@ -1249,7 +1249,7 @@
   <div id="admin-toast" class="admin-toast">Saved successfully</div>
 
   <!-- Scripts -->
-  <script src="js/admin-auth.js"></script>
+  <script src="js/admin-auth.js?v=5.0"></script>
   <script>
     // 1. Session Verification Guard
     var session = AuthSecurity.checkSession();
@@ -1471,10 +1471,12 @@
     // 4. Supabase API Helpers
     async function loadTalksRemote() {
       try {
-        var res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?select=*&order=session_number.asc`, {
+        var res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?select=*&order=session_number.asc&_t=${Date.now()}`, {
           headers: {
             'apikey': SUPABASE_CONFIG.anonKey,
-            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`
+            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
           }
         });
         if (res.ok) {
@@ -2890,6 +2892,11 @@
         } else if (allCommentators && allCommentators.length > 0) {
           // If Supabase does not have commentators yet, seed Supabase from our local commentators
           syncCommentatorsToSupabase();
+        }
+
+        // If Supabase does not have docs config yet, persist from local
+        if (!docsConf && allTalks.some(t => (t.papers && t.papers.length > 0) || (t.handouts && t.handouts.length > 0))) {
+          syncDocsRegistryToSupabase();
         }
 
         renderTalksTable();
