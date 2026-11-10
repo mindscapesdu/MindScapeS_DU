@@ -1970,6 +1970,84 @@
       });
     }
 
+    // Helpers for Failproof Document Storage & Abstract Sanitization
+    function cleanAbstract(raw) {
+      if (!raw) return '';
+      return raw.replace(/<!--MINDSCAPES_DOCS:[\s\S]*?-->/g, '').trim();
+    }
+
+    function extractTalkDocs(talk, docsConfigMap) {
+      if (!talk) return { papers: [], handouts: [] };
+      var papers = [];
+      var handouts = [];
+
+      // 1. In-memory arrays
+      if (Array.isArray(talk.papers) && talk.papers.length > 0) {
+        papers = talk.papers.filter(function (p) { return p && p.url; });
+      }
+      if (Array.isArray(talk.handouts) && talk.handouts.length > 0) {
+        handouts = talk.handouts.filter(function (h) { return h && h.url; });
+      }
+
+      // 2. JSON strings
+      if (papers.length === 0 && talk.papers_json) {
+        try {
+          var pj = JSON.parse(talk.papers_json);
+          if (Array.isArray(pj)) papers = pj.filter(function (p) { return p && p.url; });
+        } catch (e) {}
+      }
+      if (handouts.length === 0 && talk.handout_json) {
+        try {
+          var hj = JSON.parse(talk.handouts_json);
+          if (Array.isArray(hj)) handouts = hj.filter(function (h) { return h && h.url; });
+        } catch (e) {}
+      }
+
+      // 3. Embedded in talk.abstract <!--MINDSCAPES_DOCS:...-->
+      if ((papers.length === 0 || handouts.length === 0) && talk.abstract) {
+        var match = talk.abstract.match(/<!--MINDSCAPES_DOCS:([\s\S]*?)-->/);
+        if (match && match[1]) {
+          try {
+            var parsed = JSON.parse(match[1]);
+            if (papers.length === 0 && Array.isArray(parsed.papers)) {
+              papers = parsed.papers.filter(function (p) { return p && p.url; });
+            }
+            if (handouts.length === 0 && Array.isArray(parsed.handouts)) {
+              handouts = parsed.handouts.filter(function (h) { return h && h.url; });
+            }
+          } catch (e) {}
+        }
+      }
+
+      // 4. From docsConfigMap (from config-talk-docs row in Supabase)
+      if ((papers.length === 0 || handouts.length === 0) && docsConfigMap && docsConfigMap[talk.id]) {
+        var conf = docsConfigMap[talk.id];
+        if (papers.length === 0 && Array.isArray(conf.papers)) {
+          papers = conf.papers.filter(function (p) { return p && p.url; });
+        }
+        if (handouts.length === 0 && Array.isArray(conf.handouts)) {
+          handouts = conf.handouts.filter(function (h) { return h && h.url; });
+        }
+      }
+
+      // 5. Fallback legacy single fields
+      if (papers.length === 0 && talk.paper_url) {
+        papers.push({ title: talk.paper_title || talk.reading_title || 'Research Paper', url: talk.paper_url });
+      }
+      if (handouts.length === 0 && talk.handout_url) {
+        handouts.push({ title: talk.handout_title || 'Seminar Handout', url: talk.handout_url });
+      }
+      if (papers.length === 0 && handouts.length === 0 && talk.reading_url) {
+        if ((talk.reading_title || '').toLowerCase().includes('handout') || (talk.reading_url || '').toLowerCase().includes('handout')) {
+          handouts.push({ title: talk.reading_title || 'Seminar Handout', url: talk.reading_url });
+        } else {
+          papers.push({ title: talk.reading_title || 'Prep Reading', url: talk.reading_url });
+        }
+      }
+
+      return { papers: papers, handouts: handouts };
+    }
+
     // Dynamic Document Rows (Multiple Papers & Handouts with [+] buttons)
     function createDocRow(containerId, docType, data) {
       var container = document.getElementById(containerId);
@@ -2144,29 +2222,17 @@
       document.getElementById('edit-speaker-bio').value = talk.speaker_bio || '';
       document.getElementById('edit-talk-title-input').value = talk.title || '';
       document.getElementById('edit-talk-format').value = talk.format_commentators || '';
-      document.getElementById('edit-talk-abstract').value = talk.abstract || '';
+      document.getElementById('edit-talk-abstract').value = cleanAbstract(talk.abstract);
 
-      // Populate Dynamic Research Papers
-      var papersList = [];
-      if (Array.isArray(talk.papers)) papersList = talk.papers;
-      else if (talk.papers_json) {
-        try { papersList = JSON.parse(talk.papers_json); } catch (e) {}
+      // Populate Dynamic Research Papers & Seminar Handouts
+      var docsConf = allTalks.find(function (t) { return t.id === 'config-talk-docs'; });
+      var docsConfigMap = {};
+      if (docsConf && docsConf.abstract) {
+        try { docsConfigMap = JSON.parse(docsConf.abstract); } catch (e) {}
       }
-      if (papersList.length === 0 && (talk.paper_url || talk.paper_title || talk.reading_url || talk.reading_title)) {
-        papersList.push({ title: talk.paper_title || talk.reading_title || '', url: talk.paper_url || talk.reading_url || '' });
-      }
-      renderDocsList('papers-list-container', 'paper', papersList);
-
-      // Populate Dynamic Seminar Handouts
-      var handoutsList = [];
-      if (Array.isArray(talk.handouts)) handoutsList = talk.handouts;
-      else if (talk.handouts_json) {
-        try { handoutsList = JSON.parse(talk.handouts_json); } catch (e) {}
-      }
-      if (handoutsList.length === 0 && (talk.handout_url || talk.handout_title)) {
-        handoutsList.push({ title: talk.handout_title || '', url: talk.handout_url || '' });
-      }
-      renderDocsList('handouts-list-container', 'handout', handoutsList);
+      var docs = extractTalkDocs(talk, docsConfigMap);
+      renderDocsList('papers-list-container', 'paper', docs.papers);
+      renderDocsList('handouts-list-container', 'handout', docs.handouts);
 
       document.getElementById('edit-zoom-link').value = talk.zoom_link || '';
       document.getElementById('edit-zoom-meeting-id').value = talk.zoom_meeting_id || '';
@@ -2380,6 +2446,35 @@
       showAdminToast('Commentator profile removed across all browsers.');
     }
 
+    // Sync Document Registry to Supabase (Guaranteed Cloud Persistence)
+    async function syncDocsRegistryToSupabase() {
+      var docsMap = {};
+      allTalks.forEach(function (t) {
+        if (t && t.id && !t.id.startsWith('config-')) {
+          var d = extractTalkDocs(t);
+          if (d.papers.length > 0 || d.handouts.length > 0) {
+            docsMap[t.id] = d;
+          }
+        }
+      });
+      var record = {
+        id: 'config-talk-docs',
+        session_number: 996,
+        date_display: 'Config',
+        time_display: 'Config',
+        speaker_name: 'MindScapeS Documents Registry',
+        speaker_affiliation: 'Colloquium Registry',
+        title: 'Talk Documents Configuration',
+        abstract: JSON.stringify(docsMap),
+        status: 'active',
+        updated_at: new Date().toISOString()
+      };
+      var idx = allTalks.findIndex(t => t.id === 'config-talk-docs');
+      if (idx >= 0) allTalks[idx] = record;
+      else allTalks.push(record);
+      return await syncTalkToSupabase(record);
+    }
+
     // 8. Save Talk Form
     talkForm.addEventListener('submit', async function (e) {
       e.preventDefault();
@@ -2408,6 +2503,11 @@
       var hasReg = document.getElementById('edit-has-register').checked;
       var hideZoom = document.getElementById('edit-hide-zoom') ? document.getElementById('edit-hide-zoom').checked : false;
 
+      // Failproof document persistence: embed payload inside abstract so Supabase ALWAYS saves all files
+      var cleanAbs = cleanAbstract(abstract);
+      var docsPayload = JSON.stringify({ papers: papersList, handouts: handoutsList });
+      var absWithDocs = cleanAbs + ((papersList.length > 0 || handoutsList.length > 0) ? ('\n<!--MINDSCAPES_DOCS:' + docsPayload + '-->') : '');
+
       var talkData = {
         id: talkId,
         session_number: sessionNum,
@@ -2420,7 +2520,7 @@
         speaker_bio: bio,
         title: title,
         format_commentators: format,
-        abstract: abstract,
+        abstract: absWithDocs,
         papers: papersList,
         handouts: handoutsList,
         papers_json: JSON.stringify(papersList),
@@ -2455,6 +2555,7 @@
 
       showAdminToast('Synchronizing with Supabase...');
       var ok = await syncTalkToSupabase(talkData);
+      syncDocsRegistryToSupabase();
       if (ok) {
         showAdminToast('Published & Synced with Supabase!');
       } else {
@@ -2751,7 +2852,28 @@
 
       var remote = await loadTalksRemote();
       if (remote && remote.length > 0) {
-        allTalks = remote;
+        var docsConf = remote.find(t => t.id === 'config-talk-docs');
+        var docsConfigMap = {};
+        if (docsConf && docsConf.abstract) {
+          try { docsConfigMap = JSON.parse(docsConf.abstract); } catch (e) {}
+        }
+
+        var localTalks = allTalks;
+        allTalks = remote.map(function (remoteTalk) {
+          var localMatch = localTalks.find(t => t.id === remoteTalk.id);
+          var docs = extractTalkDocs(remoteTalk, docsConfigMap);
+          if (localMatch) {
+            var localDocs = extractTalkDocs(localMatch);
+            if (localDocs.papers.length > docs.papers.length) docs.papers = localDocs.papers;
+            if (localDocs.handouts.length > docs.handouts.length) docs.handouts = localDocs.handouts;
+          }
+          remoteTalk.papers = docs.papers;
+          remoteTalk.handouts = docs.handouts;
+          remoteTalk.papers_json = JSON.stringify(docs.papers);
+          remoteTalk.handouts_json = JSON.stringify(docs.handouts);
+          return remoteTalk;
+        });
+
         localStorage.setItem('mindscapes_talks', JSON.stringify(allTalks));
 
         // Sync Commentators from Supabase

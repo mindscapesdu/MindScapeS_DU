@@ -46,6 +46,84 @@
       .replace(/'/g, '&#039;');
   }
 
+  // Helpers for Failproof Document Retrieval & Abstract Sanitization
+  function cleanAbstract(raw) {
+    if (!raw) return '';
+    return raw.replace(/<!--MINDSCAPES_DOCS:[\s\S]*?-->/g, '').trim();
+  }
+
+  function extractTalkDocs(talk, docsConfigMap) {
+    if (!talk) return { papers: [], handouts: [] };
+    var papers = [];
+    var handouts = [];
+
+    // 1. In-memory arrays
+    if (Array.isArray(talk.papers) && talk.papers.length > 0) {
+      papers = talk.papers.filter(function (p) { return p && p.url; });
+    }
+    if (Array.isArray(talk.handouts) && talk.handouts.length > 0) {
+      handouts = talk.handouts.filter(function (h) { return h && h.url; });
+    }
+
+    // 2. JSON strings
+    if (papers.length === 0 && talk.papers_json) {
+      try {
+        var pj = JSON.parse(talk.papers_json);
+        if (Array.isArray(pj)) papers = pj.filter(function (p) { return p && p.url; });
+      } catch (e) {}
+    }
+    if (handouts.length === 0 && talk.handouts_json) {
+      try {
+        var hj = JSON.parse(talk.handouts_json);
+        if (Array.isArray(hj)) handouts = hj.filter(function (h) { return h && h.url; });
+      } catch (e) {}
+    }
+
+    // 3. Embedded in talk.abstract <!--MINDSCAPES_DOCS:...-->
+    if ((papers.length === 0 || handouts.length === 0) && talk.abstract) {
+      var match = talk.abstract.match(/<!--MINDSCAPES_DOCS:([\s\S]*?)-->/);
+      if (match && match[1]) {
+        try {
+          var parsed = JSON.parse(match[1]);
+          if (papers.length === 0 && Array.isArray(parsed.papers)) {
+            papers = parsed.papers.filter(function (p) { return p && p.url; });
+          }
+          if (handouts.length === 0 && Array.isArray(parsed.handouts)) {
+            handouts = parsed.handouts.filter(function (h) { return h && h.url; });
+          }
+        } catch (e) {}
+      }
+    }
+
+    // 4. From docsConfigMap (from config-talk-docs row in Supabase)
+    if ((papers.length === 0 || handouts.length === 0) && docsConfigMap && docsConfigMap[talk.id]) {
+      var conf = docsConfigMap[talk.id];
+      if (papers.length === 0 && Array.isArray(conf.papers)) {
+        papers = conf.papers.filter(function (p) { return p && p.url; });
+      }
+      if (handouts.length === 0 && Array.isArray(conf.handouts)) {
+        handouts = conf.handouts.filter(function (h) { return h && h.url; });
+      }
+    }
+
+    // 5. Fallback legacy single fields
+    if (papers.length === 0 && talk.paper_url) {
+      papers.push({ title: talk.paper_title || talk.reading_title || 'Research Paper', url: talk.paper_url });
+    }
+    if (handouts.length === 0 && talk.handout_url) {
+      handouts.push({ title: talk.handout_title || 'Seminar Handout', url: talk.handout_url });
+    }
+    if (papers.length === 0 && handouts.length === 0 && talk.reading_url) {
+      if ((talk.reading_title || '').toLowerCase().includes('handout') || (talk.reading_url || '').toLowerCase().includes('handout')) {
+        handouts.push({ title: talk.reading_title || 'Seminar Handout', url: talk.reading_url });
+      } else {
+        papers.push({ title: talk.reading_title || 'Prep Reading', url: talk.reading_url });
+      }
+    }
+
+    return { papers: papers, handouts: handouts };
+  }
+
   var regForm = document.getElementById('session-reg-form');
   var regFormWrap = document.getElementById('reg-form-wrap');
   var regConfirmWrap = document.getElementById('reg-confirm-wrap');
@@ -231,13 +309,25 @@
   function ensureModalExists(talk) {
     var modalId = 'modal-' + talk.id;
     var existing = document.getElementById(modalId);
-    var paragraphs = (talk.abstract || '').split('\n\n').filter(function (p) { return p.trim().length > 0; });
+    var cleanAbs = cleanAbstract(talk.abstract);
+    var paragraphs = (cleanAbs || '').split('\n\n').filter(function (p) { return p.trim().length > 0; });
     var abstractHtml = paragraphs.map(function (p) { return '<p style="font-size: 0.96rem; line-height: 1.65; margin-bottom: 0.85rem;">' + escapeHtml(p) + '</p>'; }).join('') || '<p>Abstract in preparation.</p>';
 
-    var readingHtml = '';
-    if (talk.reading_url) {
-      readingHtml = '<a href="' + escapeHtml(talk.reading_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Download Prep Reading (PDF)</a>';
-    }
+    var docs = extractTalkDocs(talk);
+    var readingBtns = [];
+    docs.papers.forEach(function (p, pIdx) {
+      if (p && p.url) {
+        var label = p.title ? ('Paper: ' + (p.title.length > 28 ? p.title.substring(0, 26) + '...' : p.title)) : ('Download Paper ' + (docs.papers.length > 1 ? (pIdx + 1) : '') + ' (PDF)');
+        readingBtns.push('<a href="' + escapeHtml(p.url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="margin-right: 0.5rem; margin-bottom: 0.4rem;">' + escapeHtml(label) + '</a>');
+      }
+    });
+    docs.handouts.forEach(function (h, hIdx) {
+      if (h && h.url) {
+        var label = h.title ? ('Handout: ' + (h.title.length > 28 ? h.title.substring(0, 26) + '...' : h.title)) : ('Download Handout ' + (docs.handouts.length > 1 ? (hIdx + 1) : '') + ' (PDF)');
+        readingBtns.push('<a href="' + escapeHtml(h.url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="margin-right: 0.5rem; margin-bottom: 0.4rem;">' + escapeHtml(label) + '</a>');
+      }
+    });
+    var readingHtml = readingBtns.join(' ');
 
     var registerHtml = '';
     if (talk.has_register) {
@@ -427,6 +517,30 @@
         if (res.ok) return res.json();
       }).then(function (remoteTalks) {
         if (Array.isArray(remoteTalks) && remoteTalks.length > 0) {
+          var localCached = [];
+          try { localCached = JSON.parse(localStorage.getItem('mindscapes_talks') || '[]'); } catch (e) {}
+
+          var docsConf = remoteTalks.find(function (t) { return t.id === 'config-talk-docs'; });
+          var docsConfigMap = {};
+          if (docsConf && docsConf.abstract) {
+            try { docsConfigMap = JSON.parse(docsConf.abstract); } catch (e) {}
+          }
+
+          remoteTalks = remoteTalks.map(function (remoteTalk) {
+            var localMatch = localCached.find(function (t) { return t.id === remoteTalk.id; });
+            var docs = extractTalkDocs(remoteTalk, docsConfigMap);
+            if (localMatch) {
+              var localDocs = extractTalkDocs(localMatch);
+              if (localDocs.papers.length > docs.papers.length) docs.papers = localDocs.papers;
+              if (localDocs.handouts.length > docs.handouts.length) docs.handouts = localDocs.handouts;
+            }
+            remoteTalk.papers = docs.papers;
+            remoteTalk.handouts = docs.handouts;
+            remoteTalk.papers_json = JSON.stringify(docs.papers);
+            remoteTalk.handouts_json = JSON.stringify(docs.handouts);
+            return remoteTalk;
+          });
+
           localStorage.setItem('mindscapes_talks', JSON.stringify(remoteTalks));
           renderDynamicTable(remoteTalks);
         }
@@ -441,6 +555,13 @@
     function applyData(talks) {
       if (!Array.isArray(talks) || talks.length === 0) return;
       var realTalks = talks.filter(function (t) { return t.id !== 'config-homepage-poster' && !t.id.startsWith('config-'); });
+
+      // Look for Cloud Document Registry row
+      var docsConf = talks.find(function (t) { return t.id === 'config-talk-docs'; });
+      var docsConfigMap = {};
+      if (docsConf && docsConf.abstract) {
+        try { docsConfigMap = JSON.parse(docsConf.abstract); } catch (e) {}
+      }
 
       // 1. Dynamic Homepage Spotlight Card (index.html)
       var spotlightCard = document.querySelector('.spotlight-card');
@@ -480,7 +601,8 @@
 
           var abstractEl = spotlightCard.querySelector('.abstract-content');
           if (abstractEl && activeTalk.abstract) {
-            var paras = activeTalk.abstract.split('\n\n').filter(function (p) { return p.trim().length > 0; });
+            var cleanAbs = cleanAbstract(activeTalk.abstract);
+            var paras = cleanAbs.split('\n\n').filter(function (p) { return p.trim().length > 0; });
             abstractEl.innerHTML = paras.map(function (p, i) {
               return '<p>' + (i === 0 ? '<strong>Abstract:</strong> ' : '') + escapeHtml(p) + '</p>';
             }).join('');
@@ -501,31 +623,53 @@
             }
 
             // Extract all research papers and handouts for Spotlight
-            var spotDocs = [];
-            if (Array.isArray(activeTalk.papers)) spotDocs = spotDocs.concat(activeTalk.papers);
-            else if (activeTalk.papers_json) {
-              try { spotDocs = spotDocs.concat(JSON.parse(activeTalk.papers_json)); } catch (e) {}
-            }
-            if (Array.isArray(activeTalk.handouts)) spotDocs = spotDocs.concat(activeTalk.handouts);
-            else if (activeTalk.handouts_json) {
-              try { spotDocs = spotDocs.concat(JSON.parse(activeTalk.handouts_json)); } catch (e) {}
-            }
-            if (spotDocs.length === 0 && (activeTalk.paper_url || activeTalk.reading_url)) {
-              spotDocs.push({ title: activeTalk.paper_title || activeTalk.reading_title || 'Prep Reading', url: activeTalk.paper_url || activeTalk.reading_url });
-            }
-            if (spotDocs.length === 0 && activeTalk.handout_url) {
-              spotDocs.push({ title: activeTalk.handout_title || 'Seminar Handout', url: activeTalk.handout_url });
-            }
+            var spotDocs = extractTalkDocs(activeTalk, docsConfigMap);
 
-            spotDocs.forEach(function (doc, dIdx) {
-              if (doc && doc.url) {
-                var docLabel = doc.title ? ('PDF: ' + (doc.title.length > 28 ? doc.title.substring(0, 26) + '...' : doc.title)) : ('Download Reading ' + (spotDocs.length > 1 ? (dIdx + 1) : '') + ' (PDF)');
-                btns.push('<a href="' + escapeHtml(doc.url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">' + escapeHtml(docLabel) + '</a>');
+            spotDocs.papers.forEach(function (p, pIdx) {
+              if (p && p.url) {
+                var docLabel = p.title ? ('PDF: ' + (p.title.length > 28 ? p.title.substring(0, 26) + '...' : p.title)) : ('Download Paper ' + (spotDocs.papers.length > 1 ? (pIdx + 1) : '') + ' (PDF)');
+                btns.push('<a href="' + escapeHtml(p.url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">' + escapeHtml(docLabel) + '</a>');
+              }
+            });
+
+            spotDocs.handouts.forEach(function (h, hIdx) {
+              if (h && h.url) {
+                var docLabel = h.title ? ('PDF: ' + (h.title.length > 28 ? h.title.substring(0, 26) + '...' : h.title)) : ('Download Handout ' + (spotDocs.handouts.length > 1 ? (hIdx + 1) : '') + ' (PDF)');
+                btns.push('<a href="' + escapeHtml(h.url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">' + escapeHtml(docLabel) + '</a>');
               }
             });
 
             btns.push('<a href="schedule.html" class="btn btn-secondary">View Full Schedule &rarr;</a>');
             actionsEl.innerHTML = btns.join(' ');
+          }
+        }
+      }
+
+      // 1b. Dynamic Concluded Sessions Card on Homepage (index.html)
+      var recentCard = document.querySelector('.session-card.completed');
+      if (recentCard) {
+        var concludedTalk = realTalks.find(function (t) { return t.status === 'concluded'; });
+        if (concludedTalk) {
+          var concDocs = extractTalkDocs(concludedTalk, docsConfigMap);
+          var actionsWrap = recentCard.querySelector('div[style*="display: flex"]');
+          if (actionsWrap) {
+            var concBtns = [
+              '<a href="archive.html#session-' + (concludedTalk.session_number || '') + '" class="btn btn-secondary btn-sm">View Session Archive</a>',
+              '<a href="readings.html#session-' + (concludedTalk.session_number || '') + '" class="btn btn-secondary btn-sm">Access Session Handouts</a>'
+            ];
+            concDocs.papers.forEach(function (p, pIdx) {
+              if (p && p.url) {
+                var lbl = p.title ? ('Paper: ' + (p.title.length > 24 ? p.title.substring(0, 22) + '...' : p.title)) : ('Paper ' + (concDocs.papers.length > 1 ? (pIdx + 1) : '') + ' (PDF)');
+                concBtns.push('<a href="' + escapeHtml(p.url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">' + escapeHtml(lbl) + '</a>');
+              }
+            });
+            concDocs.handouts.forEach(function (h, hIdx) {
+              if (h && h.url) {
+                var lbl = h.title ? ('Handout: ' + (h.title.length > 24 ? h.title.substring(0, 22) + '...' : h.title)) : ('Handout ' + (concDocs.handouts.length > 1 ? (hIdx + 1) : '') + ' (PDF)');
+                concBtns.push('<a href="' + escapeHtml(h.url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">' + escapeHtml(lbl) + '</a>');
+              }
+            });
+            actionsWrap.innerHTML = concBtns.join(' ');
           }
         }
       }
@@ -723,6 +867,12 @@
       var archiveContainer = document.getElementById('archived-sessions-container');
       if (!archiveContainer || !Array.isArray(talks)) return;
 
+      var docsConf = talks.find(function (t) { return t.id === 'config-talk-docs'; });
+      var docsConfigMap = {};
+      if (docsConf && docsConf.abstract) {
+        try { docsConfigMap = JSON.parse(docsConf.abstract); } catch (e) {}
+      }
+
       var concludedTalks = talks.filter(function (t) { return t.status === 'concluded' && t.id !== 'config-homepage-poster'; });
       concludedTalks.sort(function (a, b) { return (a.session_number || 0) - (b.session_number || 0); });
 
@@ -730,20 +880,12 @@
         var archiveHtml = '';
         concludedTalks.forEach(function (talk) {
           var materialsList = [];
+          var docs = extractTalkDocs(talk, docsConfigMap);
 
           // 1. Gather all research papers
-          var papersList = [];
-          if (Array.isArray(talk.papers)) papersList = talk.papers;
-          else if (talk.papers_json) {
-            try { papersList = JSON.parse(talk.papers_json); } catch (e) {}
-          }
-          if (papersList.length === 0 && (talk.paper_url || talk.paper_title)) {
-            papersList.push({ title: talk.paper_title || talk.reading_title || talk.title, url: talk.paper_url });
-          }
-
-          papersList.forEach(function (p, pIdx) {
+          docs.papers.forEach(function (p, pIdx) {
             if (p && p.url) {
-              var pTitle = p.title || ('Research Paper ' + (papersList.length > 1 ? (pIdx + 1) : ''));
+              var pTitle = p.title || ('Research Paper ' + (docs.papers.length > 1 ? (pIdx + 1) : ''));
               materialsList.push(
                 '<li style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.92rem;' + (materialsList.length > 0 ? ' border-top: 1px solid #eae5de; padding-top: 0.65rem;' : '') + '">' +
                 '<span><strong>Research Paper:</strong> ' + escapeHtml(pTitle) + '</span>' +
@@ -754,18 +896,9 @@
           });
 
           // 2. Gather all seminar handouts
-          var handoutsList = [];
-          if (Array.isArray(talk.handouts)) handoutsList = talk.handouts;
-          else if (talk.handouts_json) {
-            try { handoutsList = JSON.parse(talk.handouts_json); } catch (e) {}
-          }
-          if (handoutsList.length === 0 && (talk.handout_url || talk.handout_title)) {
-            handoutsList.push({ title: talk.handout_title || ('Speaker Handout: ' + talk.speaker_name), url: talk.handout_url });
-          }
-
-          handoutsList.forEach(function (h, hIdx) {
+          docs.handouts.forEach(function (h, hIdx) {
             if (h && h.url) {
-              var hTitle = h.title || ('Speaker Handout ' + (handoutsList.length > 1 ? (hIdx + 1) : ''));
+              var hTitle = h.title || ('Speaker Handout ' + (docs.handouts.length > 1 ? (hIdx + 1) : ''));
               materialsList.push(
                 '<li style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.92rem;' + (materialsList.length > 0 ? ' border-top: 1px solid #eae5de; padding-top: 0.65rem;' : '') + '">' +
                 '<span><strong>Seminar Handout:</strong> <em>' + escapeHtml(hTitle) + '</em></span>' +
@@ -774,19 +907,6 @@
               );
             }
           });
-
-          // 3. Fallback prep reading if not already included
-          if (talk.reading_url && talk.reading_url !== talk.paper_url && talk.reading_url !== talk.handout_url) {
-            var alreadyIn = papersList.some(function (p) { return p.url === talk.reading_url; }) || handoutsList.some(function (h) { return h.url === talk.reading_url; });
-            if (!alreadyIn) {
-              materialsList.push(
-                '<li style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.92rem;' + (materialsList.length > 0 ? ' border-top: 1px solid #eae5de; padding-top: 0.65rem;' : '') + '">' +
-                '<span><strong>Prep Reading:</strong> ' + escapeHtml(talk.reading_title || talk.title) + '</span>' +
-                '<a href="' + escapeHtml(talk.reading_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Download Prep Reading (PDF) &darr;</a>' +
-                '</li>'
-              );
-            }
-          }
 
           var materialsBox = '';
           if (materialsList.length > 0) {
@@ -804,8 +924,9 @@
           }
 
           var abstractHtml = '';
-          if (talk.abstract) {
-            abstractHtml = '<div style="margin: 1.25rem 0;"><p style="font-size: 0.98rem; line-height: 1.65; color: var(--text-color);">' + escapeHtml(talk.abstract) + '</p></div>';
+          var rawAbs = cleanAbstract(talk.abstract);
+          if (rawAbs) {
+            abstractHtml = '<div style="margin: 1.25rem 0;"><p style="font-size: 0.98rem; line-height: 1.65; color: var(--text-color);">' + escapeHtml(rawAbs) + '</p></div>';
           }
 
           archiveHtml += '<article class="session-card" id="session-' + (talk.session_number || '') + '">' +
@@ -836,33 +957,20 @@
       var readingsContainer = document.getElementById('readings-container');
       if (!readingsContainer || !Array.isArray(talks)) return;
 
+      var docsConf = talks.find(function (t) { return t.id === 'config-talk-docs'; });
+      var docsConfigMap = {};
+      if (docsConf && docsConf.abstract) {
+        try { docsConfigMap = JSON.parse(docsConf.abstract); } catch (e) {}
+      }
+
       var readTalks = talks.filter(function (t) { return t.id !== 'config-homepage-poster' && !t.id.startsWith('config-'); });
       var sorted = [...readTalks].sort(function (a, b) { return (b.session_number || 0) - (a.session_number || 0); });
       var hasAnyReading = false;
       var readingsHtml = '';
 
       sorted.forEach(function (talk) {
-        var papersList = [];
-        if (Array.isArray(talk.papers)) papersList = talk.papers;
-        else if (talk.papers_json) {
-          try { papersList = JSON.parse(talk.papers_json); } catch (e) {}
-        }
-        if (papersList.length === 0 && (talk.paper_url || talk.paper_title)) {
-          papersList.push({ title: talk.paper_title || talk.reading_title || talk.title, url: talk.paper_url });
-        }
-
-        var handoutsList = [];
-        if (Array.isArray(talk.handouts)) handoutsList = talk.handouts;
-        else if (talk.handouts_json) {
-          try { handoutsList = JSON.parse(talk.handouts_json); } catch (e) {}
-        }
-        if (handoutsList.length === 0 && (talk.handout_url || talk.handout_title)) {
-          handoutsList.push({ title: talk.handout_title || ('Handout \u2022 ' + talk.speaker_name), url: talk.handout_url });
-        }
-
-        var hasDocs = papersList.some(function (p) { return p && p.url; }) ||
-          handoutsList.some(function (h) { return h && h.url; }) ||
-          talk.reading_url || talk.reading_title;
+        var docs = extractTalkDocs(talk, docsConfigMap);
+        var hasDocs = (docs.papers.length > 0) || (docs.handouts.length > 0);
 
         if (hasDocs) {
           hasAnyReading = true;
@@ -871,24 +979,22 @@
           var badgeClass = isUpcoming ? 'upcoming' : 'completed';
 
           var buttonsHtml = '';
-          papersList.forEach(function (p, pIdx) {
+          docs.papers.forEach(function (p, pIdx) {
             if (p && p.url) {
-              var pBtnLabel = p.title ? ('Paper: ' + (p.title.length > 28 ? p.title.substring(0, 26) + '...' : p.title)) : ('Download Paper ' + (papersList.length > 1 ? (pIdx + 1) : '') + ' (PDF) &darr;');
+              var pBtnLabel = p.title ? ('Paper: ' + (p.title.length > 28 ? p.title.substring(0, 26) + '...' : p.title)) : ('Download Paper ' + (docs.papers.length > 1 ? (pIdx + 1) : '') + ' (PDF) &darr;');
               buttonsHtml += '<a href="' + escapeHtml(p.url) + '" target="_blank" rel="noopener noreferrer" class="btn ' + (isUpcoming ? 'btn-gold' : 'btn-secondary') + ' btn-sm" style="margin-right: 0.5rem; margin-bottom: 0.5rem;">' + escapeHtml(pBtnLabel) + '</a>';
             }
           });
-          handoutsList.forEach(function (h, hIdx) {
+          docs.handouts.forEach(function (h, hIdx) {
             if (h && h.url) {
-              var hBtnLabel = h.title ? ('Handout: ' + (h.title.length > 28 ? h.title.substring(0, 26) + '...' : h.title)) : ('Download Handout ' + (handoutsList.length > 1 ? (hIdx + 1) : '') + ' (PDF) &darr;');
+              var hBtnLabel = h.title ? ('Handout: ' + (h.title.length > 28 ? h.title.substring(0, 26) + '...' : h.title)) : ('Download Handout ' + (docs.handouts.length > 1 ? (hIdx + 1) : '') + ' (PDF) &darr;');
               buttonsHtml += '<a href="' + escapeHtml(h.url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="margin-right: 0.5rem; margin-bottom: 0.5rem;">' + escapeHtml(hBtnLabel) + '</a>';
             }
           });
-          if (talk.reading_url && !papersList.some(function (p) { return p.url === talk.reading_url; }) && !handoutsList.some(function (h) { return h.url === talk.reading_url; })) {
-            buttonsHtml += '<a href="' + escapeHtml(talk.reading_url) + '" target="_blank" rel="noopener noreferrer" class="btn ' + (isUpcoming && papersList.length === 0 ? 'btn-gold' : 'btn-secondary') + ' btn-sm" style="margin-bottom: 0.5rem;">Prep Reading (PDF) &darr;</a>';
-          }
 
           var citation = talk.reading_title || (talk.speaker_name + ' \u2014 "' + talk.title + '"');
-          var context = talk.abstract ? (talk.abstract.length > 280 ? talk.abstract.substring(0, 280) + '...' : talk.abstract) : 'Preparatory reading material for Session ' + (talk.session_number || '') + '.';
+          var rawAbs = cleanAbstract(talk.abstract);
+          var context = rawAbs ? (rawAbs.length > 280 ? rawAbs.substring(0, 280) + '...' : rawAbs) : 'Preparatory reading material for Session ' + (talk.session_number || '') + '.';
 
           readingsHtml += '<section class="reading-module" id="session-' + (talk.session_number || '') + '">' +
             '<div class="reading-module-header">' +
@@ -931,6 +1037,30 @@
         if (res.ok) return res.json();
       }).then(function (remoteTalks) {
         if (Array.isArray(remoteTalks) && remoteTalks.length > 0) {
+          var localCached = [];
+          try { localCached = JSON.parse(localStorage.getItem('mindscapes_talks') || '[]'); } catch (e) {}
+
+          var docsConf = remoteTalks.find(function (t) { return t.id === 'config-talk-docs'; });
+          var docsConfigMap = {};
+          if (docsConf && docsConf.abstract) {
+            try { docsConfigMap = JSON.parse(docsConf.abstract); } catch (e) {}
+          }
+
+          remoteTalks = remoteTalks.map(function (remoteTalk) {
+            var localMatch = localCached.find(function (t) { return t.id === remoteTalk.id; });
+            var docs = extractTalkDocs(remoteTalk, docsConfigMap);
+            if (localMatch) {
+              var localDocs = extractTalkDocs(localMatch);
+              if (localDocs.papers.length > docs.papers.length) docs.papers = localDocs.papers;
+              if (localDocs.handouts.length > docs.handouts.length) docs.handouts = localDocs.handouts;
+            }
+            remoteTalk.papers = docs.papers;
+            remoteTalk.handouts = docs.handouts;
+            remoteTalk.papers_json = JSON.stringify(docs.papers);
+            remoteTalk.handouts_json = JSON.stringify(docs.handouts);
+            return remoteTalk;
+          });
+
           localStorage.setItem('mindscapes_talks', JSON.stringify(remoteTalks));
           applyData(remoteTalks);
         }
