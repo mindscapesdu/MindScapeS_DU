@@ -1084,52 +1084,62 @@
           <textarea id="edit-talk-abstract" class="field-input-admin" rows="5" placeholder="Enter full abstract paragraphs..."></textarea>
         </div>
 
-        <!-- Materials Section: Paper & Handout Separated -->
+        <!-- Materials Section: Multiple Papers & Handouts with Dynamic [+] Add Buttons -->
         <div style="margin-top: 1.25rem; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 6px; padding: 1.15rem;">
-          <h4 style="margin: 0 0 0.85rem; font-family: var(--font-sans); font-size: 0.95rem; color: #92400e; display: flex; align-items: center; gap: 0.5rem;">
+          <h4 style="margin: 0 0 1rem; font-family: var(--font-sans); font-size: 0.95rem; color: #92400e; display: flex; align-items: center; gap: 0.5rem;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
               <polyline points="14 2 14 8 20 8"/>
             </svg>
-            <span>Preparatory Research Paper &amp; Session Handouts</span>
+            <span>Preparatory Research Papers &amp; Session Handouts</span>
           </h4>
 
-          <!-- Option 1: Research Paper -->
-          <div style="margin-bottom: 1.15rem;">
-            <label for="edit-paper-title" class="field-label-admin">1. Preparatory Research Paper Title</label>
-            <input type="text" id="edit-paper-title" class="field-input-admin" placeholder="e.g. The Flexibility and Stability of Perspectives (Aristotelian Society)">
-            <label class="field-label-admin" style="margin-top: 0.5rem;">Research Paper PDF (Choose PDF File or enter URL/path)</label>
-            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-              <input type="text" id="edit-paper-url" class="field-input-admin" style="flex: 2;" placeholder="e.g. Papers and Handouts/... or https://...">
-              <input type="file" id="edit-paper-file" accept="application/pdf" class="field-input-admin" style="flex: 1;">
+          <!-- Section 1: Preparatory Research Papers -->
+          <div style="margin-bottom: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 0.5rem;">
+              <label class="field-label-admin" style="margin: 0; font-weight: 700; color: #1c1917; font-size: 0.9rem;">
+                1. Preparatory Research Papers
+              </label>
+              <button type="button" id="btn-add-paper-row" class="btn" style="background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; padding: 0.3rem 0.75rem; font-size: 0.82rem; font-weight: 600; cursor: pointer; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.35rem;">
+                <span style="font-size: 1.05rem; line-height: 1;">+</span> Add Research Paper
+              </button>
             </div>
-            <div style="font-size: 0.8rem; color: #78716c; margin-top: 0.35rem;" id="paper-file-status">No PDF selected</div>
+            <div id="papers-list-container" style="display: flex; flex-direction: column; gap: 0.85rem;"></div>
           </div>
 
-          <!-- Option 2: Session Handout -->
-          <div style="border-top: 1px dashed #e7e5e4; padding-top: 1rem;">
-            <label for="edit-handout-title" class="field-label-admin">2. Speaker Seminar Handout Title</label>
-            <input type="text" id="edit-handout-title" class="field-input-admin" placeholder="e.g. Kibbe Handout — Language of Thought Series">
-            <label class="field-label-admin" style="margin-top: 0.5rem;">Seminar Handout PDF (Choose PDF File or enter URL/path)</label>
-            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-              <input type="text" id="edit-handout-url" class="field-input-admin" style="flex: 2;" placeholder="e.g. Papers and Handouts/... or https://...">
-              <input type="file" id="edit-handout-file" accept="application/pdf" class="field-input-admin" style="flex: 1;">
+          <!-- Section 2: Session Handouts -->
+          <div style="border-top: 1px dashed #e7e5e4; padding-top: 1.15rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 0.5rem;">
+              <label class="field-label-admin" style="margin: 0; font-weight: 700; color: #1c1917; font-size: 0.9rem;">
+                2. Speaker Seminar Handouts
+              </label>
+              <button type="button" id="btn-add-handout-row" class="btn" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; padding: 0.3rem 0.75rem; font-size: 0.82rem; font-weight: 600; cursor: pointer; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.35rem;">
+                <span style="font-size: 1.05rem; line-height: 1;">+</span> Add Seminar Handout
+              </button>
             </div>
-            <div style="font-size: 0.8rem; color: #78716c; margin-top: 0.35rem;" id="handout-file-status">No PDF selected</div>
+            <div id="handouts-list-container" style="display: flex; flex-direction: column; gap: 0.85rem;"></div>
           </div>
         </div>
 
         <!-- Zoom Meeting Configuration Box -->
         <div style="margin-top: 1.25rem; background: #f0f7ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 1.15rem;">
-          <h4 style="margin: 0 0 0.35rem; font-family: var(--font-sans); font-size: 0.95rem; color: #1e40af; display: flex; align-items: center; gap: 0.5rem;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M23 7l-7 5 7 5V7z"/>
-              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-            </svg>
-            <span>Zoom Access &amp; Meeting Credentials for this Talk</span>
-          </h4>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; flex-wrap: wrap; gap: 0.5rem;">
+            <h4 style="margin: 0; font-family: var(--font-sans); font-size: 0.95rem; color: #1e40af; display: flex; align-items: center; gap: 0.5rem;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 7l-7 5 7 5V7z"/>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+              </svg>
+              <span>Zoom Access &amp; Meeting Credentials for this Talk</span>
+            </h4>
+            <button type="button" id="btn-zoom-default" class="btn" style="background: #2563eb; color: #ffffff; padding: 0.35rem 0.85rem; font-size: 0.82rem; font-weight: 600; border: none; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              Default
+            </button>
+          </div>
           <p style="margin: 0 0 0.85rem; font-size: 0.82rem; color: #3b82f6;">
-            These credentials are automatically provided to attendees upon registration if registration is enabled for this talk.
+            Click <strong>&ldquo;Default&rdquo;</strong> to auto-fill the official MindScapeS recurring Zoom link, meeting ID, and passcode.
           </p>
           <div class="form-grid-row-2">
             <div>
@@ -1153,7 +1163,7 @@
           </div>
         </div>
 
-        <!-- Table Display & Registration Options -->
+        <!-- Table Display & Registration & Zoom Visibility Options -->
         <div style="margin-top: 1.25rem; display: flex; gap: 1.5rem; flex-wrap: wrap; background: #f8fafc; padding: 0.95rem 1.15rem; border: 1px solid #e2e8f0; border-radius: 6px;">
           <label style="display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.88rem; cursor: pointer;">
             <input type="checkbox" id="edit-has-abstract">
@@ -1162,6 +1172,10 @@
           <label style="display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.88rem; cursor: pointer; color: #1e3a8a;">
             <input type="checkbox" id="edit-has-register">
             <span><strong>Enable Registration</strong> (Adds talk to public Registration Dropdown &amp; displays "Register" button)</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.88rem; cursor: pointer; color: #b45309;">
+            <input type="checkbox" id="edit-hide-zoom">
+            <span><strong>Hide Zoom Link</strong> (Hides public Zoom join button &amp; credentials for this talk)</span>
           </label>
         </div>
 
@@ -1433,6 +1447,15 @@
         role_pill: 'Commentator \u2022 Session 1',
         topic: "Commentary on Prof. Melissa Kibbe's colloquium on infant object representation.",
         bio: 'Sami Yousif explores spatial cognition, perceptual grouping, numerical representation, and how cognitive systems organize complex visual and mental information across development.'
+      },
+      {
+        id: 'comm-2',
+        name: 'Sarita Tamang',
+        affiliation: 'University of Delhi, India \u2022 Department of Philosophy',
+        image: '',
+        role_pill: 'Commentator',
+        topic: '',
+        bio: ''
       }
     ];
 
@@ -1464,6 +1487,10 @@
 
     async function syncTalkToSupabase(talk) {
       try {
+        var recordToSync = Object.assign({}, talk);
+        delete recordToSync.papers;
+        delete recordToSync.handouts;
+
         // 1. Try PATCH first for existing records (instant update by id)
         var patchRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?id=eq.${encodeURIComponent(talk.id)}`, {
           method: 'PATCH',
@@ -1473,7 +1500,7 @@
             'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
             'Prefer': 'return=representation'
           },
-          body: JSON.stringify(talk)
+          body: JSON.stringify(recordToSync)
         });
 
         if (patchRes.ok) {
@@ -1482,7 +1509,7 @@
         }
 
         // 2. If PATCH failed (e.g. unknown column in DB), retry without optional fields
-        var cleanTalk = Object.assign({}, talk);
+        var cleanTalk = Object.assign({}, recordToSync);
         delete cleanTalk.zoom_link;
         delete cleanTalk.zoom_meeting_id;
         delete cleanTalk.zoom_passcode;
@@ -1490,6 +1517,9 @@
         delete cleanTalk.speaker_bio;
         delete cleanTalk.paper_title;
         delete cleanTalk.handout_title;
+        delete cleanTalk.papers_json;
+        delete cleanTalk.handouts_json;
+        delete cleanTalk.hide_zoom;
 
         var retryPatch = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?id=eq.${encodeURIComponent(talk.id)}`, {
           method: 'PATCH',
@@ -1537,12 +1567,12 @@
             'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
             'Prefer': 'resolution=merge-duplicates'
           },
-          body: JSON.stringify(talk)
+          body: JSON.stringify(recordToSync)
         });
 
         if (res.ok) return true;
 
-        // 4. Fallback clean POST if zoom columns not present in Supabase table
+        // 4. Fallback clean POST if new columns not present in Supabase table
         var retryPost = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?on_conflict=id`, {
           method: 'POST',
           headers: {
@@ -1940,23 +1970,69 @@
       });
     }
 
-    // Generic PDF upload handler (Cloud Storage + Safe Size Handling)
-    function setupPdfUpload(fileInputId, urlInputId, statusElId, label) {
-      var fileInput = document.getElementById(fileInputId);
-      var urlInput = document.getElementById(urlInputId);
-      var statusEl = document.getElementById(statusElId);
-      if (!fileInput || !urlInput) return;
+    // Dynamic Document Rows (Multiple Papers & Handouts with [+] buttons)
+    function createDocRow(containerId, docType, data) {
+      var container = document.getElementById(containerId);
+      if (!container) return;
+
+      var rowId = 'doc-row-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+      var item = data || { title: '', url: '' };
+
+      var isPaper = (docType === 'paper');
+      var labelText = isPaper ? 'Research Paper' : 'Seminar Handout';
+      var placeholderTitle = isPaper
+        ? 'e.g. The Flexibility and Stability of Perspectives (Aristotelian Society)'
+        : 'e.g. Kibbe Handout \u2014 Language of Thought Series';
+
+      var row = document.createElement('div');
+      row.className = 'doc-row-item';
+      row.id = rowId;
+      row.style.cssText = 'background: #ffffff; border: 1px solid #e7e5e4; border-radius: 6px; padding: 0.85rem; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.04);';
+
+      row.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+          <span style="font-size: 0.78rem; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.5px;">${labelText}</span>
+          <button type="button" class="btn-remove-doc-row" style="background: #fee2e2; border: 1px solid #fecaca; color: #dc2626; border-radius: 4px; padding: 0.2rem 0.55rem; font-size: 0.78rem; font-weight: 700; cursor: pointer;" title="Remove this ${labelText}">✕ Remove</button>
+        </div>
+        <div>
+          <label class="field-label-admin" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Title / Citation</label>
+          <input type="text" class="field-input-admin doc-title-input" placeholder="${placeholderTitle}" value="${escapeHtml(item.title || '')}">
+        </div>
+        <div style="margin-top: 0.5rem;">
+          <label class="field-label-admin" style="font-size: 0.8rem; margin-bottom: 0.25rem;">PDF Document (Choose PDF to Upload or Paste URL)</label>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+            <input type="text" class="field-input-admin doc-url-input" style="flex: 2; min-width: 180px;" placeholder="https://... or Papers and Handouts/..." value="${escapeHtml(item.url || '')}">
+            <input type="file" class="field-input-admin doc-file-input" accept="application/pdf" style="flex: 1; min-width: 140px; font-size: 0.8rem;">
+          </div>
+          <div class="doc-file-status" style="font-size: 0.78rem; color: #78716c; margin-top: 0.35rem;">
+            ${item.url ? '<span style="color: #16a34a; font-weight: 600;">✓ Active document attached</span>' : 'No PDF selected'}
+          </div>
+        </div>
+      `;
+
+      container.appendChild(row);
+
+      // Bind Remove button
+      var removeBtn = row.querySelector('.btn-remove-doc-row');
+      removeBtn.addEventListener('click', function () {
+        row.remove();
+        if (container.children.length === 0) {
+          createDocRow(containerId, docType, { title: '', url: '' });
+        }
+      });
+
+      // Bind PDF Upload
+      var fileInput = row.querySelector('.doc-file-input');
+      var urlInput = row.querySelector('.doc-url-input');
+      var statusEl = row.querySelector('.doc-file-status');
 
       fileInput.addEventListener('change', async function () {
         var file = this.files[0];
         if (!file) return;
 
-        if (statusEl) statusEl.textContent = 'Uploading ' + file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB) to Supabase Storage...';
+        statusEl.innerHTML = '<span style="color: #2563eb;">Uploading ' + escapeHtml(file.name) + ' (' + (file.size / 1024).toFixed(1) + ' KB) to Supabase Storage...</span>';
 
-        // 1. Try uploading to Supabase Storage bucket 'readings'
         var cleanFileName = Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-        var uploadedUrl = null;
-
         try {
           var uploadRes = await fetch(`${SUPABASE_CONFIG.url}/storage/v1/object/readings/${cleanFileName}`, {
             method: 'POST',
@@ -1969,44 +2045,87 @@
           });
 
           if (uploadRes.ok) {
-            uploadedUrl = `${SUPABASE_CONFIG.url}/storage/v1/object/public/readings/${cleanFileName}`;
+            var uploadedUrl = `${SUPABASE_CONFIG.url}/storage/v1/object/public/readings/${cleanFileName}`;
             urlInput.value = uploadedUrl;
-            if (statusEl) statusEl.innerHTML = '<span style="color: #16a34a; font-weight: 600;">✓ Uploaded to Cloud Storage:</span> ' + escapeHtml(file.name);
-            showAdminToast(label + ' uploaded to Supabase Storage successfully!');
+            statusEl.innerHTML = '<span style="color: #16a34a; font-weight: 600;">✓ Uploaded to Supabase Cloud:</span> ' + escapeHtml(file.name);
+            showAdminToast(labelText + ' uploaded to Supabase Storage!');
             return;
           } else {
             var errData = await uploadRes.json().catch(function () { return {}; });
             var errMsg = errData.message || errData.error || ('HTTP ' + uploadRes.status);
-            console.warn('Supabase storage upload returned:', errMsg);
-            if (statusEl) {
-              statusEl.innerHTML = '<span style="color: #dc2626;">Storage Notice:</span> ' + escapeHtml(errMsg) + '. (Run SQL script in Supabase)';
-            }
+            console.warn('Storage upload returned:', errMsg);
+            statusEl.innerHTML = '<span style="color: #dc2626;">Storage notice:</span> ' + escapeHtml(errMsg) + ' (Run SQL script in Supabase)';
             showAdminToast('Storage notice: ' + errMsg + '. Please run the SQL in Supabase SQL Editor.', 6000);
           }
         } catch (err) {
-          console.warn('Supabase storage connection error:', err);
+          console.warn('Storage fetch err:', err);
         }
 
-        // 2. Safe Base64 fallback (only for compact files under 800 KB to prevent localStorage crashes)
+        // Safe Base64 fallback for files <= 800 KB
         if (file.size <= 800 * 1024) {
           var reader = new FileReader();
           reader.onload = function (e) {
             urlInput.value = e.target.result;
-            if (statusEl) statusEl.innerHTML = '<span style="color: #b45309;">Attached locally (' + (file.size / 1024).toFixed(1) + ' KB):</span> ' + escapeHtml(file.name);
-            showAdminToast(label + ' attached. Click Save to publish.');
+            statusEl.innerHTML = '<span style="color: #b45309;">Attached locally (' + (file.size / 1024).toFixed(1) + ' KB):</span> ' + escapeHtml(file.name);
+            showAdminToast(labelText + ' attached locally. Click Save Talk to publish.');
           };
           reader.readAsDataURL(file);
         } else {
-          if (statusEl) {
-            statusEl.innerHTML = '<span style="color: #dc2626; font-weight: 600;">File is ' + (file.size / (1024 * 1024)).toFixed(1) + ' MB.</span> Run the SQL script in Supabase to enable Cloud Storage, or paste an external PDF link above.';
-          }
-          showAdminToast('File is ' + (file.size / (1024 * 1024)).toFixed(1) + ' MB. Please run the SQL script in Supabase to enable Storage.', 6000);
+          statusEl.innerHTML = '<span style="color: #dc2626; font-weight: 600;">File is ' + (file.size / (1024 * 1024)).toFixed(1) + ' MB.</span> Run the SQL script in Supabase to enable Cloud Storage, or paste an external link.';
+          showAdminToast('File is ' + (file.size / (1024 * 1024)).toFixed(1) + ' MB. Run the SQL script in Supabase to enable Cloud Storage.', 6000);
         }
       });
     }
 
-    setupPdfUpload('edit-paper-file', 'edit-paper-url', 'paper-file-status', 'Research Paper');
-    setupPdfUpload('edit-handout-file', 'edit-handout-url', 'handout-file-status', 'Seminar Handout');
+    function renderDocsList(containerId, docType, items) {
+      var container = document.getElementById(containerId);
+      if (!container) return;
+      container.innerHTML = '';
+      if (Array.isArray(items) && items.length > 0) {
+        items.forEach(function (it) {
+          if (it && (it.title || it.url)) {
+            createDocRow(containerId, docType, it);
+          }
+        });
+      }
+      if (container.children.length === 0) {
+        createDocRow(containerId, docType, { title: '', url: '' });
+      }
+    }
+
+    function getDocsFromContainer(containerId) {
+      var container = document.getElementById(containerId);
+      if (!container) return [];
+      var rows = container.querySelectorAll('.doc-row-item');
+      var list = [];
+      rows.forEach(function (row) {
+        var tInput = row.querySelector('.doc-title-input');
+        var uInput = row.querySelector('.doc-url-input');
+        var tVal = tInput ? tInput.value.trim() : '';
+        var uVal = uInput ? uInput.value.trim() : '';
+        if (tVal || uVal) {
+          list.push({ title: tVal, url: uVal });
+        }
+      });
+      return list;
+    }
+
+    // Add row button event listeners
+    document.getElementById('btn-add-paper-row')?.addEventListener('click', function () {
+      createDocRow('papers-list-container', 'paper', { title: '', url: '' });
+    });
+    document.getElementById('btn-add-handout-row')?.addEventListener('click', function () {
+      createDocRow('handouts-list-container', 'handout', { title: '', url: '' });
+    });
+
+    // Default Zoom button event listener
+    document.getElementById('btn-zoom-default')?.addEventListener('click', function () {
+      document.getElementById('edit-zoom-link').value = 'https://us04web.zoom.us/j/78997015908?pwd=yuya59o1LA4Rs2li5Jn3BWv0qfgfb0.1';
+      document.getElementById('edit-zoom-instructions').value = 'Meeting chat link: https://us04web.zoom.us/launch/jc/78997015908';
+      document.getElementById('edit-zoom-meeting-id').value = '789 9701 5908';
+      document.getElementById('edit-zoom-passcode').value = 'cognition';
+      showAdminToast('Default MindScapeS Zoom credentials populated!');
+    });
 
     function openTalkEditor(talkId) {
       var talk = allTalks.find(t => t.id === talkId);
@@ -2027,23 +2146,27 @@
       document.getElementById('edit-talk-format').value = talk.format_commentators || '';
       document.getElementById('edit-talk-abstract').value = talk.abstract || '';
 
-      // Research Paper
-      var paperTitleInput = document.getElementById('edit-paper-title');
-      var paperUrlInput = document.getElementById('edit-paper-url');
-      var paperStatus = document.getElementById('paper-file-status');
-      if (paperTitleInput) paperTitleInput.value = talk.paper_title || talk.reading_title || '';
-      if (paperUrlInput) paperUrlInput.value = talk.paper_url || talk.reading_url || '';
-      if (document.getElementById('edit-paper-file')) document.getElementById('edit-paper-file').value = '';
-      if (paperStatus) paperStatus.textContent = (talk.paper_url || talk.reading_url) ? 'Active paper link attached' : 'No PDF selected';
+      // Populate Dynamic Research Papers
+      var papersList = [];
+      if (Array.isArray(talk.papers)) papersList = talk.papers;
+      else if (talk.papers_json) {
+        try { papersList = JSON.parse(talk.papers_json); } catch (e) {}
+      }
+      if (papersList.length === 0 && (talk.paper_url || talk.paper_title || talk.reading_url || talk.reading_title)) {
+        papersList.push({ title: talk.paper_title || talk.reading_title || '', url: talk.paper_url || talk.reading_url || '' });
+      }
+      renderDocsList('papers-list-container', 'paper', papersList);
 
-      // Seminar Handout
-      var handoutTitleInput = document.getElementById('edit-handout-title');
-      var handoutUrlInput = document.getElementById('edit-handout-url');
-      var handoutStatus = document.getElementById('handout-file-status');
-      if (handoutTitleInput) handoutTitleInput.value = talk.handout_title || '';
-      if (handoutUrlInput) handoutUrlInput.value = talk.handout_url || '';
-      if (document.getElementById('edit-handout-file')) document.getElementById('edit-handout-file').value = '';
-      if (handoutStatus) handoutStatus.textContent = talk.handout_url ? 'Active handout link attached' : 'No PDF selected';
+      // Populate Dynamic Seminar Handouts
+      var handoutsList = [];
+      if (Array.isArray(talk.handouts)) handoutsList = talk.handouts;
+      else if (talk.handouts_json) {
+        try { handoutsList = JSON.parse(talk.handouts_json); } catch (e) {}
+      }
+      if (handoutsList.length === 0 && (talk.handout_url || talk.handout_title)) {
+        handoutsList.push({ title: talk.handout_title || '', url: talk.handout_url || '' });
+      }
+      renderDocsList('handouts-list-container', 'handout', handoutsList);
 
       document.getElementById('edit-zoom-link').value = talk.zoom_link || '';
       document.getElementById('edit-zoom-meeting-id').value = talk.zoom_meeting_id || '';
@@ -2051,6 +2174,7 @@
       document.getElementById('edit-zoom-instructions').value = talk.zoom_instructions || '';
       document.getElementById('edit-has-abstract').checked = !!talk.has_abstract;
       document.getElementById('edit-has-register').checked = !!talk.has_register;
+      document.getElementById('edit-hide-zoom').checked = !!talk.hide_zoom;
 
       talkModal.classList.add('open');
       document.body.style.overflow = 'hidden';
@@ -2073,21 +2197,9 @@
       document.getElementById('edit-talk-format').value = 'Talk\nStudent-First Q&A\nOpen Q&A';
       document.getElementById('edit-talk-abstract').value = '';
 
-      var paperTitleInput = document.getElementById('edit-paper-title');
-      var paperUrlInput = document.getElementById('edit-paper-url');
-      var paperStatus = document.getElementById('paper-file-status');
-      if (paperTitleInput) paperTitleInput.value = '';
-      if (paperUrlInput) paperUrlInput.value = '';
-      if (document.getElementById('edit-paper-file')) document.getElementById('edit-paper-file').value = '';
-      if (paperStatus) paperStatus.textContent = 'No PDF selected';
-
-      var handoutTitleInput = document.getElementById('edit-handout-title');
-      var handoutUrlInput = document.getElementById('edit-handout-url');
-      var handoutStatus = document.getElementById('handout-file-status');
-      if (handoutTitleInput) handoutTitleInput.value = '';
-      if (handoutUrlInput) handoutUrlInput.value = '';
-      if (document.getElementById('edit-handout-file')) document.getElementById('edit-handout-file').value = '';
-      if (handoutStatus) handoutStatus.textContent = 'No PDF selected';
+      // Initialize with 1 blank row for each doc type
+      renderDocsList('papers-list-container', 'paper', []);
+      renderDocsList('handouts-list-container', 'handout', []);
 
       document.getElementById('edit-zoom-link').value = '';
       document.getElementById('edit-zoom-meeting-id').value = '';
@@ -2095,6 +2207,7 @@
       document.getElementById('edit-zoom-instructions').value = '';
       document.getElementById('edit-has-abstract').checked = false;
       document.getElementById('edit-has-register').checked = false;
+      document.getElementById('edit-hide-zoom').checked = false;
 
       talkModal.classList.add('open');
       document.body.style.overflow = 'hidden';
@@ -2284,10 +2397,8 @@
       var format = document.getElementById('edit-talk-format').value.trim();
       var abstract = document.getElementById('edit-talk-abstract').value.trim();
 
-      var paperTitle = document.getElementById('edit-paper-title') ? document.getElementById('edit-paper-title').value.trim() : '';
-      var paperUrl = document.getElementById('edit-paper-url') ? document.getElementById('edit-paper-url').value.trim() : '';
-      var handoutTitle = document.getElementById('edit-handout-title') ? document.getElementById('edit-handout-title').value.trim() : '';
-      var handoutUrl = document.getElementById('edit-handout-url') ? document.getElementById('edit-handout-url').value.trim() : '';
+      var papersList = getDocsFromContainer('papers-list-container');
+      var handoutsList = getDocsFromContainer('handouts-list-container');
 
       var zoomLink = document.getElementById('edit-zoom-link').value.trim();
       var zoomMeetingId = document.getElementById('edit-zoom-meeting-id').value.trim();
@@ -2295,6 +2406,7 @@
       var zoomInstructions = document.getElementById('edit-zoom-instructions').value.trim();
       var hasAbs = document.getElementById('edit-has-abstract').checked;
       var hasReg = document.getElementById('edit-has-register').checked;
+      var hideZoom = document.getElementById('edit-hide-zoom') ? document.getElementById('edit-hide-zoom').checked : false;
 
       var talkData = {
         id: talkId,
@@ -2309,18 +2421,23 @@
         title: title,
         format_commentators: format,
         abstract: abstract,
-        paper_title: paperTitle,
-        paper_url: paperUrl,
-        handout_title: handoutTitle,
-        handout_url: handoutUrl,
-        reading_title: paperTitle || handoutTitle || '',
-        reading_url: paperUrl || handoutUrl || '',
+        papers: papersList,
+        handouts: handoutsList,
+        papers_json: JSON.stringify(papersList),
+        handouts_json: JSON.stringify(handoutsList),
+        paper_title: (papersList[0] && papersList[0].title) || '',
+        paper_url: (papersList[0] && papersList[0].url) || '',
+        handout_title: (handoutsList[0] && handoutsList[0].title) || '',
+        handout_url: (handoutsList[0] && handoutsList[0].url) || '',
+        reading_title: (papersList[0] && papersList[0].title) || (handoutsList[0] && handoutsList[0].title) || '',
+        reading_url: (papersList[0] && papersList[0].url) || (handoutsList[0] && handoutsList[0].url) || '',
         zoom_link: zoomLink,
         zoom_meeting_id: zoomMeetingId,
         zoom_passcode: zoomPasscode,
         zoom_instructions: zoomInstructions,
         has_abstract: hasAbs,
         has_register: hasReg,
+        hide_zoom: hideZoom,
         updated_at: new Date().toISOString()
       };
 
@@ -2399,10 +2516,16 @@
         return;
       }
 
-      var ok = await AuthSecurity.setPassword(newPass);
-      if (ok) {
-        showAdminToast('Administrator password updated successfully!');
+      var result = await AuthSecurity.setPassword(newPass, currentUsername);
+      if (result && result.success) {
+        if (result.synced) {
+          showAdminToast('Password updated and saved to Supabase! You can use it on all future logins.');
+        } else {
+          showAdminToast('Password updated locally and queued for Supabase sync.');
+        }
         document.getElementById('form-change-password').reset();
+      } else {
+        alert((result && result.error) || 'Failed to update password.');
       }
     });
 

@@ -149,8 +149,10 @@
       var confZoomNote = document.getElementById('conf-zoom-note');
       var confZoomDetails = document.getElementById('conf-zoom-details');
 
+      var hideZoomOpt = selectedOpt && selectedOpt.getAttribute('data-hide-zoom') === 'true';
+
       if (confZoomDetails) {
-        if (zoomId || zoomLink) {
+        if (!hideZoomOpt && (zoomId || zoomLink)) {
           if (confZoomId) confZoomId.textContent = zoomId || 'Check registered email';
           if (confZoomPass) confZoomPass.textContent = zoomPass || 'None';
           if (confZoomNote) {
@@ -166,9 +168,10 @@
             }
           }
         } else {
-          confZoomDetails.innerHTML = '<p style="margin: 0.35rem 0; font-family: var(--font-sans); font-size: 0.94rem; color: #1e3a8a;">' +
-            '<strong>Zoom credentials in preparation:</strong> Meeting links will be emailed directly to <strong>' + escapeHtml(regData.email) + '</strong> before this colloquium commences.' +
-            '</p>';
+          var noticeText = hideZoomOpt
+            ? '<strong>Restricted Access Session:</strong> Zoom meeting credentials are kept confidential and will be shared directly with verified registrants at <strong>' + escapeHtml(regData.email) + '</strong> before the session starts.'
+            : '<strong>Zoom credentials in preparation:</strong> Meeting links will be emailed directly to <strong>' + escapeHtml(regData.email) + '</strong> before this colloquium commences.';
+          confZoomDetails.innerHTML = '<p style="margin: 0.35rem 0; font-family: var(--font-sans); font-size: 0.94rem; color: #1e3a8a;">' + noticeText + '</p>';
         }
       }
 
@@ -305,10 +308,12 @@
 
         var actionsHtml = '<span class="sched-empty-action">&mdash;</span>';
         var actionBtns = [];
-        if (talk.zoom_link) {
-          actionBtns.push('<a href="' + escapeHtml(talk.zoom_link) + '" target="_blank" rel="noopener noreferrer" class="btn-table-zoom">Join Zoom</a>');
-        } else if (talk.status === 'active' || talk.id === 'session-2') {
-          actionBtns.push('<a href="https://us04web.zoom.us/launch/jc/78997015908" target="_blank" rel="noopener noreferrer" class="btn-table-zoom">Join Zoom</a>');
+        if (!talk.hide_zoom) {
+          if (talk.zoom_link) {
+            actionBtns.push('<a href="' + escapeHtml(talk.zoom_link) + '" target="_blank" rel="noopener noreferrer" class="btn-table-zoom">Join Zoom</a>');
+          } else if (talk.status === 'active' || talk.id === 'session-2') {
+            actionBtns.push('<a href="https://us04web.zoom.us/launch/jc/78997015908" target="_blank" rel="noopener noreferrer" class="btn-table-zoom">Join Zoom</a>');
+          }
         }
         if (talk.has_abstract) {
           actionBtns.push('<button type="button" class="btn-table-outline" data-modal-target="modal-' + escapeHtml(talk.id) + '">View Abstract</button>');
@@ -370,6 +375,7 @@
           'data-zoom-pass="' + escapeHtml(talk.zoom_passcode || '') + '" ' +
           'data-zoom-link="' + escapeHtml(talk.zoom_link || '') + '" ' +
           'data-zoom-note="' + escapeHtml(talk.zoom_instructions || '') + '" ' +
+          'data-hide-zoom="' + (talk.hide_zoom ? 'true' : 'false') + '" ' +
           (idx === 0 ? 'selected' : '') + '>' +
           escapeHtml(label) +
           '</option>';
@@ -483,17 +489,41 @@
           var actionsEl = spotlightCard.querySelector('.spotlight-actions');
           if (actionsEl) {
             var btns = [];
-            if (activeTalk.zoom_link) {
-              btns.push('<a href="' + escapeHtml(activeTalk.zoom_link) + '" target="_blank" rel="noopener noreferrer" class="btn btn-zoom" id="spotlight-zoom-btn">Join Zoom Meeting &rarr;</a>');
-            } else if (activeTalk.status === 'active' || activeTalk.id === 'session-2') {
-              btns.push('<a href="https://us04web.zoom.us/launch/jc/78997015908" target="_blank" rel="noopener noreferrer" class="btn btn-zoom" id="spotlight-zoom-btn">Join Zoom Meeting &rarr;</a>');
+            if (!activeTalk.hide_zoom) {
+              if (activeTalk.zoom_link) {
+                btns.push('<a href="' + escapeHtml(activeTalk.zoom_link) + '" target="_blank" rel="noopener noreferrer" class="btn btn-zoom" id="spotlight-zoom-btn">Join Zoom Meeting &rarr;</a>');
+              } else if (activeTalk.status === 'active' || activeTalk.id === 'session-2') {
+                btns.push('<a href="https://us04web.zoom.us/launch/jc/78997015908" target="_blank" rel="noopener noreferrer" class="btn btn-zoom" id="spotlight-zoom-btn">Join Zoom Meeting &rarr;</a>');
+              }
             }
             if (activeTalk.has_register || activeTalk.status === 'active') {
               btns.push('<a href="schedule.html#register" class="btn btn-gold">Register for Session ' + (activeTalk.session_number || '') + '</a>');
             }
-            if (activeTalk.reading_url) {
-              btns.push('<a href="' + escapeHtml(activeTalk.reading_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Download Prep Reading (PDF)</a>');
+
+            // Extract all research papers and handouts for Spotlight
+            var spotDocs = [];
+            if (Array.isArray(activeTalk.papers)) spotDocs = spotDocs.concat(activeTalk.papers);
+            else if (activeTalk.papers_json) {
+              try { spotDocs = spotDocs.concat(JSON.parse(activeTalk.papers_json)); } catch (e) {}
             }
+            if (Array.isArray(activeTalk.handouts)) spotDocs = spotDocs.concat(activeTalk.handouts);
+            else if (activeTalk.handouts_json) {
+              try { spotDocs = spotDocs.concat(JSON.parse(activeTalk.handouts_json)); } catch (e) {}
+            }
+            if (spotDocs.length === 0 && (activeTalk.paper_url || activeTalk.reading_url)) {
+              spotDocs.push({ title: activeTalk.paper_title || activeTalk.reading_title || 'Prep Reading', url: activeTalk.paper_url || activeTalk.reading_url });
+            }
+            if (spotDocs.length === 0 && activeTalk.handout_url) {
+              spotDocs.push({ title: activeTalk.handout_title || 'Seminar Handout', url: activeTalk.handout_url });
+            }
+
+            spotDocs.forEach(function (doc, dIdx) {
+              if (doc && doc.url) {
+                var docLabel = doc.title ? ('PDF: ' + (doc.title.length > 28 ? doc.title.substring(0, 26) + '...' : doc.title)) : ('Download Reading ' + (spotDocs.length > 1 ? (dIdx + 1) : '') + ' (PDF)');
+                btns.push('<a href="' + escapeHtml(doc.url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">' + escapeHtml(docLabel) + '</a>');
+              }
+            });
+
             btns.push('<a href="schedule.html" class="btn btn-secondary">View Full Schedule &rarr;</a>');
             actionsEl.innerHTML = btns.join(' ');
           }
@@ -575,11 +605,20 @@
               role_pill: 'Commentator \u2022 Session 1',
               topic: "Commentary on Prof. Melissa Kibbe's colloquium on infant object representation.",
               bio: 'Sami Yousif explores spatial cognition, perceptual grouping, numerical representation, and how cognitive systems organize complex visual and mental information across development.'
+            },
+            {
+              id: 'comm-2',
+              name: 'Sarita Tamang',
+              affiliation: 'University of Delhi, India \u2022 Department of Philosophy',
+              image: '',
+              role_pill: 'Commentator',
+              topic: '',
+              bio: ''
             }
           ];
         } else {
-          // Ensure dummy test records are removed
-          commData = commData.filter(function (c) { return c.id !== 'comm-2' && c.name !== 'Prof. Tarun'; });
+          // Remove old test entries if any
+          commData = commData.filter(function (c) { return c.name !== 'Prof. Tarun'; });
         }
 
         var commHtml = '';
@@ -691,31 +730,62 @@
         var archiveHtml = '';
         concludedTalks.forEach(function (talk) {
           var materialsList = [];
-          if (talk.handout_url) {
-            var hTitle = talk.handout_title || ('Speaker Handout: ' + talk.speaker_name + ' \u2022 MindScapeS Colloquium');
-            materialsList.push(
-              '<li style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.92rem;">' +
-              '<span><strong>Handout:</strong> <em>' + escapeHtml(hTitle) + '</em></span>' +
-              '<a href="' + escapeHtml(talk.handout_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Download Handout (PDF)</a>' +
-              '</li>'
-            );
+
+          // 1. Gather all research papers
+          var papersList = [];
+          if (Array.isArray(talk.papers)) papersList = talk.papers;
+          else if (talk.papers_json) {
+            try { papersList = JSON.parse(talk.papers_json); } catch (e) {}
           }
-          if (talk.paper_url) {
-            var pTitle = talk.paper_title || talk.reading_title || talk.title;
-            materialsList.push(
-              '<li style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.92rem;' + (materialsList.length > 0 ? ' border-top: 1px solid #eae5de; padding-top: 0.65rem;' : '') + '">' +
-              '<span><strong>Research Paper:</strong> ' + escapeHtml(pTitle) + '</span>' +
-              '<a href="' + escapeHtml(talk.paper_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Download Paper (PDF)</a>' +
-              '</li>'
-            );
+          if (papersList.length === 0 && (talk.paper_url || talk.paper_title)) {
+            papersList.push({ title: talk.paper_title || talk.reading_title || talk.title, url: talk.paper_url });
           }
+
+          papersList.forEach(function (p, pIdx) {
+            if (p && p.url) {
+              var pTitle = p.title || ('Research Paper ' + (papersList.length > 1 ? (pIdx + 1) : ''));
+              materialsList.push(
+                '<li style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.92rem;' + (materialsList.length > 0 ? ' border-top: 1px solid #eae5de; padding-top: 0.65rem;' : '') + '">' +
+                '<span><strong>Research Paper:</strong> ' + escapeHtml(pTitle) + '</span>' +
+                '<a href="' + escapeHtml(p.url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Download Paper (PDF) &darr;</a>' +
+                '</li>'
+              );
+            }
+          });
+
+          // 2. Gather all seminar handouts
+          var handoutsList = [];
+          if (Array.isArray(talk.handouts)) handoutsList = talk.handouts;
+          else if (talk.handouts_json) {
+            try { handoutsList = JSON.parse(talk.handouts_json); } catch (e) {}
+          }
+          if (handoutsList.length === 0 && (talk.handout_url || talk.handout_title)) {
+            handoutsList.push({ title: talk.handout_title || ('Speaker Handout: ' + talk.speaker_name), url: talk.handout_url });
+          }
+
+          handoutsList.forEach(function (h, hIdx) {
+            if (h && h.url) {
+              var hTitle = h.title || ('Speaker Handout ' + (handoutsList.length > 1 ? (hIdx + 1) : ''));
+              materialsList.push(
+                '<li style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.92rem;' + (materialsList.length > 0 ? ' border-top: 1px solid #eae5de; padding-top: 0.65rem;' : '') + '">' +
+                '<span><strong>Seminar Handout:</strong> <em>' + escapeHtml(hTitle) + '</em></span>' +
+                '<a href="' + escapeHtml(h.url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Download Handout (PDF) &darr;</a>' +
+                '</li>'
+              );
+            }
+          });
+
+          // 3. Fallback prep reading if not already included
           if (talk.reading_url && talk.reading_url !== talk.paper_url && talk.reading_url !== talk.handout_url) {
-            materialsList.push(
-              '<li style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.92rem;' + (materialsList.length > 0 ? ' border-top: 1px solid #eae5de; padding-top: 0.65rem;' : '') + '">' +
-              '<span><strong>Prep Reading:</strong> ' + escapeHtml(talk.reading_title || talk.title) + '</span>' +
-              '<a href="' + escapeHtml(talk.reading_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Download Prep Reading (PDF)</a>' +
-              '</li>'
-            );
+            var alreadyIn = papersList.some(function (p) { return p.url === talk.reading_url; }) || handoutsList.some(function (h) { return h.url === talk.reading_url; });
+            if (!alreadyIn) {
+              materialsList.push(
+                '<li style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-sans); font-size: 0.92rem;' + (materialsList.length > 0 ? ' border-top: 1px solid #eae5de; padding-top: 0.65rem;' : '') + '">' +
+                '<span><strong>Prep Reading:</strong> ' + escapeHtml(talk.reading_title || talk.title) + '</span>' +
+                '<a href="' + escapeHtml(talk.reading_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Download Prep Reading (PDF) &darr;</a>' +
+                '</li>'
+              );
+            }
           }
 
           var materialsBox = '';
@@ -772,21 +842,49 @@
       var readingsHtml = '';
 
       sorted.forEach(function (talk) {
-        if (talk.reading_url || talk.paper_url || talk.handout_url || talk.reading_title) {
+        var papersList = [];
+        if (Array.isArray(talk.papers)) papersList = talk.papers;
+        else if (talk.papers_json) {
+          try { papersList = JSON.parse(talk.papers_json); } catch (e) {}
+        }
+        if (papersList.length === 0 && (talk.paper_url || talk.paper_title)) {
+          papersList.push({ title: talk.paper_title || talk.reading_title || talk.title, url: talk.paper_url });
+        }
+
+        var handoutsList = [];
+        if (Array.isArray(talk.handouts)) handoutsList = talk.handouts;
+        else if (talk.handouts_json) {
+          try { handoutsList = JSON.parse(talk.handouts_json); } catch (e) {}
+        }
+        if (handoutsList.length === 0 && (talk.handout_url || talk.handout_title)) {
+          handoutsList.push({ title: talk.handout_title || ('Handout \u2022 ' + talk.speaker_name), url: talk.handout_url });
+        }
+
+        var hasDocs = papersList.some(function (p) { return p && p.url; }) ||
+          handoutsList.some(function (h) { return h && h.url; }) ||
+          talk.reading_url || talk.reading_title;
+
+        if (hasDocs) {
           hasAnyReading = true;
           var isUpcoming = talk.status === 'active' || talk.status === 'upcoming';
           var badgeText = isUpcoming ? 'Active Preparation' : 'Archived Readings';
           var badgeClass = isUpcoming ? 'upcoming' : 'completed';
 
           var buttonsHtml = '';
-          if (talk.paper_url) {
-            buttonsHtml += '<a href="' + escapeHtml(talk.paper_url) + '" target="_blank" rel="noopener noreferrer" class="btn ' + (isUpcoming ? 'btn-gold' : 'btn-secondary') + ' btn-sm" style="margin-right: 0.5rem; margin-bottom: 0.5rem;">Download Paper (PDF) &darr;</a>';
-          }
-          if (talk.handout_url) {
-            buttonsHtml += '<a href="' + escapeHtml(talk.handout_url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="margin-right: 0.5rem; margin-bottom: 0.5rem;">Download Handout (PDF) &darr;</a>';
-          }
-          if (talk.reading_url && talk.reading_url !== talk.paper_url && talk.reading_url !== talk.handout_url) {
-            buttonsHtml += '<a href="' + escapeHtml(talk.reading_url) + '" target="_blank" rel="noopener noreferrer" class="btn ' + (isUpcoming && !talk.paper_url ? 'btn-gold' : 'btn-secondary') + ' btn-sm" style="margin-bottom: 0.5rem;">Prep Reading (PDF) &darr;</a>';
+          papersList.forEach(function (p, pIdx) {
+            if (p && p.url) {
+              var pBtnLabel = p.title ? ('Paper: ' + (p.title.length > 28 ? p.title.substring(0, 26) + '...' : p.title)) : ('Download Paper ' + (papersList.length > 1 ? (pIdx + 1) : '') + ' (PDF) &darr;');
+              buttonsHtml += '<a href="' + escapeHtml(p.url) + '" target="_blank" rel="noopener noreferrer" class="btn ' + (isUpcoming ? 'btn-gold' : 'btn-secondary') + ' btn-sm" style="margin-right: 0.5rem; margin-bottom: 0.5rem;">' + escapeHtml(pBtnLabel) + '</a>';
+            }
+          });
+          handoutsList.forEach(function (h, hIdx) {
+            if (h && h.url) {
+              var hBtnLabel = h.title ? ('Handout: ' + (h.title.length > 28 ? h.title.substring(0, 26) + '...' : h.title)) : ('Download Handout ' + (handoutsList.length > 1 ? (hIdx + 1) : '') + ' (PDF) &darr;');
+              buttonsHtml += '<a href="' + escapeHtml(h.url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="margin-right: 0.5rem; margin-bottom: 0.5rem;">' + escapeHtml(hBtnLabel) + '</a>';
+            }
+          });
+          if (talk.reading_url && !papersList.some(function (p) { return p.url === talk.reading_url; }) && !handoutsList.some(function (h) { return h.url === talk.reading_url; })) {
+            buttonsHtml += '<a href="' + escapeHtml(talk.reading_url) + '" target="_blank" rel="noopener noreferrer" class="btn ' + (isUpcoming && papersList.length === 0 ? 'btn-gold' : 'btn-secondary') + ' btn-sm" style="margin-bottom: 0.5rem;">Prep Reading (PDF) &darr;</a>';
           }
 
           var citation = talk.reading_title || (talk.speaker_name + ' \u2014 "' + talk.title + '"');

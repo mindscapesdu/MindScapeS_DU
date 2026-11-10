@@ -104,6 +104,9 @@ ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS paper_url TEXT;
 ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS handout_title TEXT;
 ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS handout_url TEXT;
 ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS speaker_bio TEXT;
+ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS hide_zoom BOOLEAN DEFAULT false;
+ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS papers_json TEXT;
+ALTER TABLE public.talks ADD COLUMN IF NOT EXISTS handouts_json TEXT;
 
 -- 8. Enable Row Level Security (RLS) on talks
 ALTER TABLE public.talks ENABLE ROW LEVEL SECURITY;
