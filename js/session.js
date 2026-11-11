@@ -80,15 +80,15 @@
     }
 
     // 3. Embedded in talk.abstract <!--MINDSCAPES_DOCS:...-->
-    if ((papers.length === 0 || handouts.length === 0) && talk.abstract) {
+    if (talk.abstract) {
       var match = talk.abstract.match(/<!--MINDSCAPES_DOCS:([\s\S]*?)-->/);
       if (match && match[1]) {
         try {
           var parsed = JSON.parse(match[1]);
-          if (papers.length === 0 && Array.isArray(parsed.papers)) {
+          if (Array.isArray(parsed.papers) && parsed.papers.length > papers.length) {
             papers = parsed.papers.filter(function (p) { return p && p.url; });
           }
-          if (handouts.length === 0 && Array.isArray(parsed.handouts)) {
+          if (Array.isArray(parsed.handouts) && parsed.handouts.length > handouts.length) {
             handouts = parsed.handouts.filter(function (h) { return h && h.url; });
           }
         } catch (e) {}
@@ -96,12 +96,12 @@
     }
 
     // 4. From docsConfigMap (from config-talk-docs row in Supabase)
-    if ((papers.length === 0 || handouts.length === 0) && docsConfigMap && docsConfigMap[talk.id]) {
+    if (docsConfigMap && docsConfigMap[talk.id]) {
       var conf = docsConfigMap[talk.id];
-      if (papers.length === 0 && Array.isArray(conf.papers)) {
+      if (Array.isArray(conf.papers) && conf.papers.length > papers.length) {
         papers = conf.papers.filter(function (p) { return p && p.url; });
       }
-      if (handouts.length === 0 && Array.isArray(conf.handouts)) {
+      if (Array.isArray(conf.handouts) && conf.handouts.length > handouts.length) {
         handouts = conf.handouts.filter(function (h) { return h && h.url; });
       }
     }
