@@ -508,7 +508,7 @@
 
     // 2. Fetch live updates from Supabase
     if (SUPABASE_CONFIG.url) {
-      fetch(SUPABASE_CONFIG.url + '/rest/v1/talks?select=*&order=session_number.asc&_t=' + Date.now(), {
+      fetch(SUPABASE_CONFIG.url + '/rest/v1/talks?select=*&order=session_number.asc', {
         headers: {
           'apikey': SUPABASE_CONFIG.anonKey,
           'Authorization': 'Bearer ' + SUPABASE_CONFIG.anonKey,
@@ -543,7 +543,7 @@
             return remoteTalk;
           });
 
-          localStorage.setItem('mindscapes_talks', JSON.stringify(remoteTalks));
+          try { localStorage.setItem('mindscapes_talks', JSON.stringify(remoteTalks)); } catch (e) {}
           renderDynamicTable(remoteTalks);
         }
       }).catch(function (err) {
@@ -742,58 +742,37 @@
         }
 
         if (!Array.isArray(commData) || commData.length === 0) {
-          commData = [
-            {
-              id: 'comm-1',
-              name: 'Prof. Sami Yousif',
-              affiliation: 'The Ohio State University, USA \u2022 Department of Psychology',
-              image: 'Images/sami-yousif.jpeg',
-              role_pill: 'Commentator \u2022 Session 1',
-              topic: "Commentary on Prof. Melissa Kibbe's colloquium on infant object representation.",
-              bio: 'Sami Yousif explores spatial cognition, perceptual grouping, numerical representation, and how cognitive systems organize complex visual and mental information across development.'
-            },
-            {
-              id: 'comm-2',
-              name: 'Sarita Tamang',
-              affiliation: 'University of Delhi, India \u2022 Department of Philosophy',
-              image: '',
-              role_pill: 'Commentator',
-              topic: '',
-              bio: ''
-            }
-          ];
+          commentatorsGrid.innerHTML = '<div style="grid-column: 1 / -1; padding: 2.5rem; text-align: center; color: #64748b; font-family: var(--font-sans); background: var(--card-bg); border: 1px dashed var(--border-color); border-radius: 6px;"><p style="margin: 0; font-size: 0.95rem;">Commentator and discussant profiles for upcoming sessions will be announced as colloquium dates are confirmed.</p></div>';
         } else {
-          // Remove old test entries if any
-          commData = commData.filter(function (c) { return c.name !== 'Prof. Tarun'; });
+          commData = commData.filter(function (c) { return c && c.name && c.name !== 'Prof. Tarun'; });
+          var commHtml = '';
+          commData.forEach(function (comm) {
+            var initials = (comm.name || '')
+              .replace(/^(prof\.|dr\.|ms\.|mr\.)\s*/i, '')
+              .split(' ')
+              .filter(Boolean)
+              .map(w => w[0])
+              .slice(0, 2)
+              .join('')
+              .toUpperCase() || 'CM';
+
+            var avatarHtml = comm.image
+              ? '<img src="' + escapeHtml(comm.image) + '" alt="' + escapeHtml(comm.name) + '" loading="lazy">'
+              : '<div class="speaker-monogram" style="background: #92400e;">' + initials + '</div>';
+
+            commHtml += '<article class="speaker-profile-card">' +
+              '<div class="speaker-avatar-wrap">' + avatarHtml + '</div>' +
+              '<div class="speaker-card-body">' +
+              '<span class="speaker-role-pill commentator">' + escapeHtml(comm.role_pill || 'Commentator') + '</span>' +
+              '<h3 class="speaker-name">' + escapeHtml(comm.name) + '</h3>' +
+              '<div class="speaker-affiliation">' + escapeHtml(comm.affiliation || '') + '</div>' +
+              (comm.bio ? '<p class="subtext" style="margin-bottom: 1.15rem; font-size: 0.88rem; line-height: 1.55;">' + escapeHtml(comm.bio) + '</p>' : '') +
+              (comm.topic ? '<div class="speaker-talk-topic" style="border-left-color: #92400e;"><strong>Commentary on:</strong> ' + escapeHtml(comm.topic) + '</div>' : '') +
+              '</div>' +
+              '</article>';
+          });
+          commentatorsGrid.innerHTML = commHtml;
         }
-
-        var commHtml = '';
-        commData.forEach(function (comm) {
-          var initials = (comm.name || '')
-            .replace(/^(prof\.|dr\.|ms\.|mr\.)\s*/i, '')
-            .split(' ')
-            .filter(Boolean)
-            .map(w => w[0])
-            .slice(0, 2)
-            .join('')
-            .toUpperCase() || 'CM';
-
-          var avatarHtml = comm.image
-            ? '<img src="' + escapeHtml(comm.image) + '" alt="' + escapeHtml(comm.name) + '" loading="lazy">'
-            : '<div class="speaker-monogram" style="background: #92400e;">' + initials + '</div>';
-
-          commHtml += '<article class="speaker-profile-card">' +
-            '<div class="speaker-avatar-wrap">' + avatarHtml + '</div>' +
-            '<div class="speaker-card-body">' +
-            '<span class="speaker-role-pill commentator">' + (comm.role_pill || 'Commentator') + '</span>' +
-            '<h3 class="speaker-name">' + escapeHtml(comm.name) + '</h3>' +
-            '<div class="speaker-affiliation">' + (comm.affiliation || '') + '</div>' +
-            (comm.bio ? '<p class="subtext" style="margin-bottom: 1.15rem;">' + escapeHtml(comm.bio) + '</p>' : '') +
-            (comm.topic ? '<div class="speaker-talk-topic" style="border-left-color: #92400e;"><strong>Commentary on:</strong> ' + escapeHtml(comm.topic) + '</div>' : '') +
-            '</div>' +
-            '</article>';
-        });
-        commentatorsGrid.innerHTML = commHtml;
       }
 
       // 3. Dynamic Upcoming Archival Banner & Concluded Sessions (archive.html)
@@ -1030,7 +1009,7 @@
     }
 
     if (SUPABASE_CONFIG.url) {
-      fetch(SUPABASE_CONFIG.url + '/rest/v1/talks?select=*&order=session_number.asc&_t=' + Date.now(), {
+      fetch(SUPABASE_CONFIG.url + '/rest/v1/talks?select=*&order=session_number.asc', {
         headers: {
           'apikey': SUPABASE_CONFIG.anonKey,
           'Authorization': 'Bearer ' + SUPABASE_CONFIG.anonKey,
@@ -1065,7 +1044,7 @@
             return remoteTalk;
           });
 
-          localStorage.setItem('mindscapes_talks', JSON.stringify(remoteTalks));
+          try { localStorage.setItem('mindscapes_talks', JSON.stringify(remoteTalks)); } catch (e) {}
           applyData(remoteTalks);
         }
       }).catch(function (err) {

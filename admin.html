@@ -1249,7 +1249,7 @@
   <div id="admin-toast" class="admin-toast">Saved successfully</div>
 
   <!-- Scripts -->
-  <script src="js/admin-auth.js?v=5.0"></script>
+  <script src="js/admin-auth.js?v=6.0"></script>
   <script>
     // 1. Session Verification Guard
     var session = AuthSecurity.checkSession();
@@ -1452,10 +1452,19 @@
         id: 'comm-2',
         name: 'Sarita Tamang',
         affiliation: 'University of Delhi, India \u2022 Department of Philosophy',
-        image: '',
+        image: 'https://aicypxqetxjhofluwdwf.supabase.co/storage/v1/object/public/readings/comm_sarita_tamang_1794474096049.png',
         role_pill: 'Commentator',
-        topic: '',
-        bio: ''
+        topic: "Commentary on Prof. Susanna Schellenberg's colloquium on mental evidence and perceptual capacities.",
+        bio: 'Sarita Tamang is a doctoral researcher in Philosophy at the University of Delhi. Her research focuses on the philosophy of mind, particularly the metaphysical and explanatory dimensions of perception, consciousness, and cognitive representation.'
+      },
+      {
+        id: 'comm-1794212345678',
+        name: 'Prof. Priyedarshi Jetli',
+        affiliation: 'Former faculty, Department of Philosophy, University of Delhi',
+        image: 'https://aicypxqetxjhofluwdwf.supabase.co/storage/v1/object/public/readings/comm_prof__priyedarshi_jetli_1794474096649.png',
+        role_pill: 'Commentator',
+        topic: 'Commentary of Prof. Ted (Edward) Gibson\'s talk on "How the Brain Understands Language: What Neuroscience and Cognitive Science Can Teach Us"',
+        bio: 'Priyedarshi Jetli, PhD on Plato\'s ontology of relations from Indiana University. Associate Professor at University of Delhi from 1993 to 2007. Adjunct Faculty at University of Mumbai.'
       }
     ];
 
@@ -1471,7 +1480,7 @@
     // 4. Supabase API Helpers
     async function loadTalksRemote() {
       try {
-        var res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?select=*&order=session_number.asc&_t=${Date.now()}`, {
+        var res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?select=*&order=session_number.asc`, {
           headers: {
             'apikey': SUPABASE_CONFIG.anonKey,
             'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
@@ -1483,15 +1492,29 @@
           var data = await res.json();
           if (Array.isArray(data) && data.length > 0) return data;
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error('loadTalksRemote error:', e);
+      }
       return null;
     }
 
     async function syncTalkToSupabase(talk) {
       try {
-        var recordToSync = Object.assign({}, talk);
-        delete recordToSync.papers;
-        delete recordToSync.handouts;
+        // Construct clean payload with valid columns present in database
+        var validColumns = [
+          'id', 'session_number', 'date_display', 'time_display', 'speaker_name',
+          'speaker_affiliation', 'speaker_image', 'title', 'abstract',
+          'format_commentators', 'reading_title', 'reading_url', 'status',
+          'has_abstract', 'has_register', 'paper_url', 'handout_url',
+          'speaker_bio', 'zoom_link', 'zoom_meeting_id', 'zoom_passcode',
+          'zoom_instructions', 'paper_title', 'handout_title'
+        ];
+
+        var payload = {};
+        validColumns.forEach(function (col) {
+          if (talk[col] !== undefined) payload[col] = talk[col];
+        });
+        payload.updated_at = new Date().toISOString();
 
         // 1. Try PATCH first for existing records (instant update by id)
         var patchRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?id=eq.${encodeURIComponent(talk.id)}`, {
@@ -1502,7 +1525,7 @@
             'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
             'Prefer': 'return=representation'
           },
-          body: JSON.stringify(recordToSync)
+          body: JSON.stringify(payload)
         });
 
         if (patchRes.ok) {
@@ -1510,58 +1533,22 @@
           if (Array.isArray(patched) && patched.length > 0) return true;
         }
 
-        // 2. If PATCH failed (e.g. unknown column in DB), retry without optional fields
-        var cleanTalk = Object.assign({}, recordToSync);
-        delete cleanTalk.zoom_link;
-        delete cleanTalk.zoom_meeting_id;
-        delete cleanTalk.zoom_passcode;
-        delete cleanTalk.zoom_instructions;
-        delete cleanTalk.speaker_bio;
-        delete cleanTalk.paper_title;
-        delete cleanTalk.handout_title;
-        delete cleanTalk.papers_json;
-        delete cleanTalk.handouts_json;
-        delete cleanTalk.hide_zoom;
-
-        var retryPatch = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?id=eq.${encodeURIComponent(talk.id)}`, {
-          method: 'PATCH',
+        // 2. If record doesn't exist yet, insert with POST
+        var postRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}`, {
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'apikey': SUPABASE_CONFIG.anonKey,
             'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
             'Prefer': 'return=representation'
           },
-          body: JSON.stringify(cleanTalk)
+          body: JSON.stringify(payload)
         });
 
-        if (retryPatch.ok) {
-          var retried = await retryPatch.json();
-          if (Array.isArray(retried) && retried.length > 0) return true;
-        }
+        if (postRes.ok) return true;
 
-        // 2b. Ultra-safe retry without paper_url/handout_url (fallback to standard reading_url)
-        var ultraCleanTalk = Object.assign({}, cleanTalk);
-        delete ultraCleanTalk.paper_url;
-        delete ultraCleanTalk.handout_url;
-
-        var ultraRetry = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?id=eq.${encodeURIComponent(talk.id)}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_CONFIG.anonKey,
-            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
-            'Prefer': 'return=representation'
-          },
-          body: JSON.stringify(ultraCleanTalk)
-        });
-
-        if (ultraRetry.ok) {
-          var ultraRetried = await ultraRetry.json();
-          if (Array.isArray(ultraRetried) && ultraRetried.length > 0) return true;
-        }
-
-        // 3. If record doesn't exist yet, do POST upsert
-        var res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?on_conflict=id`, {
+        // 3. Fallback upsert with merge-duplicates
+        var upsertRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?on_conflict=id`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1569,24 +1556,10 @@
             'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
             'Prefer': 'resolution=merge-duplicates'
           },
-          body: JSON.stringify(recordToSync)
+          body: JSON.stringify(payload)
         });
 
-        if (res.ok) return true;
-
-        // 4. Fallback clean POST if new columns not present in Supabase table
-        var retryPost = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?on_conflict=id`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_CONFIG.anonKey,
-            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
-            'Prefer': 'resolution=merge-duplicates'
-          },
-          body: JSON.stringify(cleanTalk)
-        });
-
-        return retryPost.ok;
+        return upsertRes.ok;
       } catch (e) {
         console.error('Supabase sync error:', e);
         return false;
@@ -1595,7 +1568,7 @@
 
     async function removeTalkFromSupabase(id) {
       try {
-        var res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?id=eq.${id}`, {
+        var res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?id=eq.${encodeURIComponent(id)}`, {
           method: 'DELETE',
           headers: {
             'apikey': SUPABASE_CONFIG.anonKey,
@@ -1604,6 +1577,7 @@
         });
         return res.ok;
       } catch (e) {
+        console.error('removeTalkFromSupabase error:', e);
         return false;
       }
     }
@@ -1959,15 +1933,38 @@
     }
 
     if (speakerImgFileInput) {
-      speakerImgFileInput.addEventListener('change', function () {
+      speakerImgFileInput.addEventListener('change', async function () {
         var file = this.files[0];
-        if (file) {
-          var reader = new FileReader();
-          reader.onload = function (e) {
-            speakerImgUrlInput.value = e.target.result;
-            updateSpeakerPreview(e.target.result);
-          };
-          reader.readAsDataURL(file);
+        if (!file) return;
+
+        speakerImgNote.innerHTML = '<span style="color: #2563eb;">Uploading portrait to Supabase Storage...</span>';
+        var cleanFileName = 'speaker_' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        try {
+          var uploadRes = await fetch(`${SUPABASE_CONFIG.url}/storage/v1/object/readings/${cleanFileName}`, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_CONFIG.anonKey,
+              'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+              'Content-Type': file.type || 'image/jpeg'
+            },
+            body: file
+          });
+
+          if (uploadRes.ok) {
+            var uploadedUrl = `${SUPABASE_CONFIG.url}/storage/v1/object/public/readings/${cleanFileName}`;
+            speakerImgUrlInput.value = uploadedUrl;
+            updateSpeakerPreview(uploadedUrl);
+            speakerImgNote.innerHTML = '<span style="color: #16a34a; font-weight: 600;">✓ Uploaded to Supabase Cloud:</span> ' + escapeHtml(file.name);
+            showAdminToast('Speaker portrait uploaded to Supabase Storage!');
+          } else {
+            var errData = await uploadRes.json().catch(function () { return {}; });
+            var errMsg = errData.message || errData.error || ('HTTP ' + uploadRes.status);
+            speakerImgNote.innerHTML = '<span style="color: #dc2626;">Upload failed:</span> ' + escapeHtml(errMsg);
+            showAdminToast('Image upload failed: ' + errMsg, 5000);
+          }
+        } catch (err) {
+          speakerImgNote.innerHTML = '<span style="color: #dc2626;">Network error during upload</span>';
+          showAdminToast('Network error uploading portrait: ' + err.message, 5000);
         }
       });
     }
@@ -2319,15 +2316,38 @@
     }
 
     if (commImgFileInput) {
-      commImgFileInput.addEventListener('change', function () {
+      commImgFileInput.addEventListener('change', async function () {
         var file = this.files[0];
-        if (file) {
-          var reader = new FileReader();
-          reader.onload = function (e) {
-            commImgUrlInput.value = e.target.result;
-            updateCommPreview(e.target.result);
-          };
-          reader.readAsDataURL(file);
+        if (!file) return;
+
+        commImgNote.innerHTML = '<span style="color: #2563eb;">Uploading photo to Supabase Storage...</span>';
+        var cleanFileName = 'comm_' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        try {
+          var uploadRes = await fetch(`${SUPABASE_CONFIG.url}/storage/v1/object/readings/${cleanFileName}`, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_CONFIG.anonKey,
+              'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+              'Content-Type': file.type || 'image/jpeg'
+            },
+            body: file
+          });
+
+          if (uploadRes.ok) {
+            var uploadedUrl = `${SUPABASE_CONFIG.url}/storage/v1/object/public/readings/${cleanFileName}`;
+            commImgUrlInput.value = uploadedUrl;
+            updateCommPreview(uploadedUrl);
+            commImgNote.innerHTML = '<span style="color: #16a34a; font-weight: 600;">✓ Uploaded to Supabase Cloud:</span> ' + escapeHtml(file.name);
+            showAdminToast('Commentator photo uploaded to Supabase Storage!');
+          } else {
+            var errData = await uploadRes.json().catch(function () { return {}; });
+            var errMsg = errData.message || errData.error || ('HTTP ' + uploadRes.status);
+            commImgNote.innerHTML = '<span style="color: #dc2626;">Upload failed:</span> ' + escapeHtml(errMsg);
+            showAdminToast('Image upload failed: ' + errMsg, 5000);
+          }
+        } catch (err) {
+          commImgNote.innerHTML = '<span style="color: #dc2626;">Network error during upload</span>';
+          showAdminToast('Network error uploading photo: ' + err.message, 5000);
         }
       });
     }
@@ -2419,19 +2439,32 @@
           bio: bio
         };
 
+        var saveCommBtn = commForm.querySelector('button[type="submit"]');
+        if (saveCommBtn) {
+          saveCommBtn.disabled = true;
+          saveCommBtn.textContent = 'Saving to Supabase...';
+        }
+
         var idx = allCommentators.findIndex(c => c.id === id);
         if (idx >= 0) allCommentators[idx] = commData;
         else allCommentators.push(commData);
 
-        localStorage.setItem('mindscapes_commentators', JSON.stringify(allCommentators));
+        try { localStorage.setItem('mindscapes_commentators', JSON.stringify(allCommentators)); } catch (e) {}
         renderCommentatorCards();
         closeCommentatorModal();
-        showAdminToast('Saving commentator & syncing to Supabase...');
+
+        showAdminToast('Saving commentator to Supabase Cloud Database...');
         var ok = await syncCommentatorsToSupabase();
+
+        if (saveCommBtn) {
+          saveCommBtn.disabled = false;
+          saveCommBtn.textContent = 'Save Commentator Profile';
+        }
+
         if (ok) {
-          showAdminToast('Commentator card synced live across all browsers via Supabase!');
+          showAdminToast('✓ Commentator profile successfully saved to Supabase!');
         } else {
-          showAdminToast('Commentator saved locally.');
+          showAdminToast('⚠️ Failed to save commentator to Supabase. Check network/permissions.', 6000);
         }
       });
     }
@@ -2440,12 +2473,18 @@
       var comm = allCommentators.find(c => c.id === id);
       if (!confirm(`Are you sure you want to remove commentator profile: ${comm?.name || ''}?`)) return;
 
-      allCommentators = allCommentators.filter(c => c.id !== id);
-      localStorage.setItem('mindscapes_commentators', JSON.stringify(allCommentators));
+      showAdminToast('Removing commentator from Supabase...');
+      var remaining = allCommentators.filter(c => c.id !== id);
+      allCommentators = remaining;
+      try { localStorage.setItem('mindscapes_commentators', JSON.stringify(allCommentators)); } catch (e) {}
       renderCommentatorCards();
-      showAdminToast('Commentator removed. Syncing to Supabase...');
-      await syncCommentatorsToSupabase();
-      showAdminToast('Commentator profile removed across all browsers.');
+
+      var ok = await syncCommentatorsToSupabase();
+      if (ok) {
+        showAdminToast('✓ Commentator profile removed from Supabase.');
+      } else {
+        showAdminToast('⚠️ Failed to remove commentator from Supabase.', 6000);
+      }
     }
 
     // Sync Document Registry to Supabase (Guaranteed Cloud Persistence)
@@ -2543,6 +2582,12 @@
         updated_at: new Date().toISOString()
       };
 
+      var saveBtn = talkForm.querySelector('button[type="submit"]');
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving to Supabase...';
+      }
+
       var idx = allTalks.findIndex(t => t.id === talkId);
       if (idx >= 0) allTalks[idx] = talkData;
       else allTalks.push(talkData);
@@ -2555,13 +2600,19 @@
       renderTalksTable();
       closeTalkModal();
 
-      showAdminToast('Synchronizing with Supabase...');
+      showAdminToast('Saving talk to Supabase Cloud Database...');
       var ok = await syncTalkToSupabase(talkData);
-      syncDocsRegistryToSupabase();
+      await syncDocsRegistryToSupabase();
+
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Session Details';
+      }
+
       if (ok) {
-        showAdminToast('Published & Synced with Supabase!');
+        showAdminToast('✓ Content successfully saved to Supabase!');
       } else {
-        showAdminToast('Saved locally. (Cloud sync will retry)');
+        showAdminToast('⚠️ Failed to save changes to Supabase. Check network/permissions.', 6000);
       }
     });
 
@@ -2570,13 +2621,18 @@
       var talk = allTalks.find(t => t.id === id);
       if (!confirm(`Are you sure you want to remove session #${talk?.session_number || ''}: ${talk?.speaker_name}?`)) return;
 
-      allTalks = allTalks.filter(t => t.id !== id);
-      localStorage.setItem('mindscapes_talks', JSON.stringify(allTalks));
-      renderTalksTable();
-
-      showAdminToast('Deleting from cloud database...');
-      await removeTalkFromSupabase(id);
-      showAdminToast('Session removed.');
+      showAdminToast('Deleting talk from Supabase...');
+      var ok = await removeTalkFromSupabase(id);
+      if (ok) {
+        allTalks = allTalks.filter(t => t.id !== id);
+        try { localStorage.setItem('mindscapes_talks', JSON.stringify(allTalks)); } catch (e) {}
+        renderTalksTable();
+        renderSpeakerCards();
+        await syncDocsRegistryToSupabase();
+        showAdminToast('✓ Talk successfully deleted from Supabase.');
+      } else {
+        showAdminToast('⚠️ Failed to delete talk from Supabase. Please retry.', 6000);
+      }
     }
 
     // 10. Security Settings Tab Handlers
@@ -2827,24 +2883,14 @@
 
     // 12. App Initialization
     async function initAdminApp() {
-      // 1. Talks
+      // 1. Initial render from cache if available (for instant display)
       var cached = localStorage.getItem('mindscapes_talks');
       if (cached) {
         try { allTalks = JSON.parse(cached); } catch (e) {}
       }
-      if (!allTalks || allTalks.length === 0) {
-        allTalks = [...DEFAULT_COLLOQUIA];
-        localStorage.setItem('mindscapes_talks', JSON.stringify(allTalks));
-      }
-
-      // 2. Commentators
       var cachedComms = localStorage.getItem('mindscapes_commentators');
       if (cachedComms) {
         try { allCommentators = JSON.parse(cachedComms); } catch (e) {}
-      }
-      if (!allCommentators || allCommentators.length === 0) {
-        allCommentators = [...DEFAULT_COMMENTATORS];
-        localStorage.setItem('mindscapes_commentators', JSON.stringify(allCommentators));
       }
 
       renderTalksTable();
@@ -2852,6 +2898,8 @@
       renderCommentatorCards();
       renderAdminPoster();
 
+      // 2. Fetch authoritative data directly from Supabase Cloud Database
+      document.getElementById('cloud-sync-text').textContent = 'Connecting to Supabase Cloud Database...';
       var remote = await loadTalksRemote();
       if (remote && remote.length > 0) {
         var docsConf = remote.find(t => t.id === 'config-talk-docs');
@@ -2860,15 +2908,8 @@
           try { docsConfigMap = JSON.parse(docsConf.abstract); } catch (e) {}
         }
 
-        var localTalks = allTalks;
         allTalks = remote.map(function (remoteTalk) {
-          var localMatch = localTalks.find(t => t.id === remoteTalk.id);
           var docs = extractTalkDocs(remoteTalk, docsConfigMap);
-          if (localMatch) {
-            var localDocs = extractTalkDocs(localMatch);
-            if (localDocs.papers.length > docs.papers.length) docs.papers = localDocs.papers;
-            if (localDocs.handouts.length > docs.handouts.length) docs.handouts = localDocs.handouts;
-          }
           remoteTalk.papers = docs.papers;
           remoteTalk.handouts = docs.handouts;
           remoteTalk.papers_json = JSON.stringify(docs.papers);
@@ -2876,33 +2917,32 @@
           return remoteTalk;
         });
 
-        localStorage.setItem('mindscapes_talks', JSON.stringify(allTalks));
+        try { localStorage.setItem('mindscapes_talks', JSON.stringify(allTalks)); } catch (e) {}
 
         // Sync Commentators from Supabase
         var remoteCommConf = remote.find(t => t.id === 'config-commentators');
         if (remoteCommConf && remoteCommConf.abstract) {
           try {
             var parsedComms = JSON.parse(remoteCommConf.abstract);
-            if (Array.isArray(parsedComms) && parsedComms.length > 0) {
+            if (Array.isArray(parsedComms)) {
               allCommentators = parsedComms;
-              localStorage.setItem('mindscapes_commentators', JSON.stringify(allCommentators));
-              renderCommentatorCards();
+              try { localStorage.setItem('mindscapes_commentators', JSON.stringify(allCommentators)); } catch (e) {}
             }
           } catch (e) {}
-        } else if (allCommentators && allCommentators.length > 0) {
-          // If Supabase does not have commentators yet, seed Supabase from our local commentators
-          syncCommentatorsToSupabase();
         }
 
         // If Supabase does not have docs config yet, persist from local
         if (!docsConf && allTalks.some(t => (t.papers && t.papers.length > 0) || (t.handouts && t.handouts.length > 0))) {
-          syncDocsRegistryToSupabase();
+          await syncDocsRegistryToSupabase();
         }
 
         renderTalksTable();
         renderSpeakerCards();
+        renderCommentatorCards();
         renderAdminPoster();
         document.getElementById('cloud-sync-text').textContent = 'Connected to Supabase (Live Cloud Sync Active)';
+      } else {
+        document.getElementById('cloud-sync-text').textContent = 'Offline / Local Cache Active';
       }
     }
 
