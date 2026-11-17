@@ -53,9 +53,10 @@
   }
 
   function extractTalkDocs(talk, docsConfigMap) {
-    if (!talk) return { papers: [], handouts: [] };
+    if (!talk) return { papers: [], handouts: [], hide_zoom: false };
     var papers = [];
     var handouts = [];
+    var hideZoom = talk.hide_zoom === true || talk.hide_zoom === 'true' || talk.hide_zoom === 1;
 
     // 1. In-memory arrays
     if (Array.isArray(talk.papers) && talk.papers.length > 0) {
@@ -91,6 +92,9 @@
           if (Array.isArray(parsed.handouts) && parsed.handouts.length > handouts.length) {
             handouts = parsed.handouts.filter(function (h) { return h && h.url; });
           }
+          if (parsed.hide_zoom !== undefined) {
+            hideZoom = !!parsed.hide_zoom;
+          }
         } catch (e) {}
       }
     }
@@ -104,9 +108,17 @@
       if (Array.isArray(conf.handouts) && conf.handouts.length > handouts.length) {
         handouts = conf.handouts.filter(function (h) { return h && h.url; });
       }
+      if (conf.hide_zoom !== undefined) {
+        hideZoom = !!conf.hide_zoom;
+      }
     }
 
-    // 5. Fallback legacy single fields
+    // 5. Instruction note flag
+    if (!hideZoom && talk.zoom_instructions && talk.zoom_instructions.indexOf('[HIDE_ZOOM]') !== -1) {
+      hideZoom = true;
+    }
+
+    // 6. Fallback legacy single fields
     if (papers.length === 0 && talk.paper_url) {
       papers.push({ title: talk.paper_title || talk.reading_title || 'Research Paper', url: talk.paper_url });
     }
@@ -121,7 +133,16 @@
       }
     }
 
-    return { papers: papers, handouts: handouts };
+    talk.hide_zoom = hideZoom;
+    return { papers: papers, handouts: handouts, hide_zoom: hideZoom };
+  }
+
+  function isTalkZoomHidden(talk, docsConfigMap) {
+    if (!talk) return false;
+    if (talk.hide_zoom === true || talk.hide_zoom === 'true' || talk.hide_zoom === 1) return true;
+    if (talk.zoom_instructions && talk.zoom_instructions.indexOf('[HIDE_ZOOM]') !== -1) return true;
+    var docs = extractTalkDocs(talk, docsConfigMap);
+    return !!docs.hide_zoom;
   }
 
   var regForm = document.getElementById('session-reg-form');
@@ -379,6 +400,12 @@
       var schedTalks = talks.filter(function(t) { return t.id !== 'config-homepage-poster' && !t.id.startsWith('config-'); });
       schedTalks.sort(function (a, b) { return (a.session_number || 0) - (b.session_number || 0); });
 
+      var docsConf = talks.find(function (t) { return t.id === 'config-talk-docs'; });
+      var docsConfigMap = {};
+      if (docsConf && docsConf.abstract) {
+        try { docsConfigMap = JSON.parse(docsConf.abstract); } catch (e) {}
+      }
+
       var newRowsHtml = '';
       schedTalks.forEach(function (talk) {
         var timeHtml = escapeHtml(talk.time_display || '').replace(/\n/g, '<br>');
@@ -398,10 +425,11 @@
 
         var actionsHtml = '<span class="sched-empty-action">&mdash;</span>';
         var actionBtns = [];
-        if (!talk.hide_zoom) {
+        var zoomHidden = isTalkZoomHidden(talk, docsConfigMap);
+        if (!zoomHidden) {
           if (talk.zoom_link) {
             actionBtns.push('<a href="' + escapeHtml(talk.zoom_link) + '" target="_blank" rel="noopener noreferrer" class="btn-table-zoom">Join Zoom</a>');
-          } else if (talk.status === 'active' || talk.id === 'session-2') {
+          } else if (talk.status === 'active') {
             actionBtns.push('<a href="https://us04web.zoom.us/launch/jc/78997015908" target="_blank" rel="noopener noreferrer" class="btn-table-zoom">Join Zoom</a>');
           }
         }
@@ -439,11 +467,11 @@
       tableBody.innerHTML = newRowsHtml;
       bindModalEvents();
       bindRegisterButtons();
-      updateRegistrationDropdown(talks);
+      updateRegistrationDropdown(talks, docsConfigMap);
     }
 
     // Dynamic dropdown generator for open sessions
-    function updateRegistrationDropdown(talks) {
+    function updateRegistrationDropdown(talks, docsConfigMap) {
       var regSelect = document.getElementById('reg-session');
       if (!regSelect || !Array.isArray(talks)) return;
 
@@ -458,6 +486,7 @@
 
       var optionsHtml = '';
       openTalks.forEach(function (talk, idx) {
+        var isHidden = isTalkZoomHidden(talk, docsConfigMap);
         var label = 'Session ' + (talk.session_number || '') + ': ' + talk.date_display + ' — ' + talk.speaker_name;
         optionsHtml += '<option value="' + escapeHtml(label) + '" ' +
           'data-session-id="' + escapeHtml(talk.id) + '" ' +
@@ -465,7 +494,7 @@
           'data-zoom-pass="' + escapeHtml(talk.zoom_passcode || '') + '" ' +
           'data-zoom-link="' + escapeHtml(talk.zoom_link || '') + '" ' +
           'data-zoom-note="' + escapeHtml(talk.zoom_instructions || '') + '" ' +
-          'data-hide-zoom="' + (talk.hide_zoom ? 'true' : 'false') + '" ' +
+          'data-hide-zoom="' + (isHidden ? 'true' : 'false') + '" ' +
           (idx === 0 ? 'selected' : '') + '>' +
           escapeHtml(label) +
           '</option>';
@@ -535,9 +564,11 @@
               var localDocs = extractTalkDocs(localMatch);
               if (localDocs.papers.length > docs.papers.length) docs.papers = localDocs.papers;
               if (localDocs.handouts.length > docs.handouts.length) docs.handouts = localDocs.handouts;
+              if (!docs.hide_zoom && localDocs.hide_zoom) docs.hide_zoom = true;
             }
             remoteTalk.papers = docs.papers;
             remoteTalk.handouts = docs.handouts;
+            remoteTalk.hide_zoom = docs.hide_zoom;
             remoteTalk.papers_json = JSON.stringify(docs.papers);
             remoteTalk.handouts_json = JSON.stringify(docs.handouts);
             return remoteTalk;
@@ -613,10 +644,11 @@
           var actionsEl = spotlightCard.querySelector('.spotlight-actions');
           if (actionsEl) {
             var btns = [];
-            if (!activeTalk.hide_zoom) {
+            var spotZoomHidden = isTalkZoomHidden(activeTalk, docsConfigMap);
+            if (!spotZoomHidden) {
               if (activeTalk.zoom_link) {
                 btns.push('<a href="' + escapeHtml(activeTalk.zoom_link) + '" target="_blank" rel="noopener noreferrer" class="btn btn-zoom" id="spotlight-zoom-btn">Join Zoom Meeting &rarr;</a>');
-              } else if (activeTalk.status === 'active' || activeTalk.id === 'session-2') {
+              } else if (activeTalk.status === 'active') {
                 btns.push('<a href="https://us04web.zoom.us/launch/jc/78997015908" target="_blank" rel="noopener noreferrer" class="btn btn-zoom" id="spotlight-zoom-btn">Join Zoom Meeting &rarr;</a>');
               }
             }
@@ -1036,9 +1068,11 @@
               var localDocs = extractTalkDocs(localMatch);
               if (localDocs.papers.length > docs.papers.length) docs.papers = localDocs.papers;
               if (localDocs.handouts.length > docs.handouts.length) docs.handouts = localDocs.handouts;
+              if (!docs.hide_zoom && localDocs.hide_zoom) docs.hide_zoom = true;
             }
             remoteTalk.papers = docs.papers;
             remoteTalk.handouts = docs.handouts;
+            remoteTalk.hide_zoom = docs.hide_zoom;
             remoteTalk.papers_json = JSON.stringify(docs.papers);
             remoteTalk.handouts_json = JSON.stringify(docs.handouts);
             return remoteTalk;

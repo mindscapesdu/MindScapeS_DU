@@ -1976,9 +1976,10 @@
     }
 
     function extractTalkDocs(talk, docsConfigMap) {
-      if (!talk) return { papers: [], handouts: [] };
+      if (!talk) return { papers: [], handouts: [], hide_zoom: false };
       var papers = [];
       var handouts = [];
+      var hideZoom = talk.hide_zoom === true || talk.hide_zoom === 'true' || talk.hide_zoom === 1;
 
       // 1. In-memory arrays
       if (Array.isArray(talk.papers) && talk.papers.length > 0) {
@@ -2014,6 +2015,9 @@
             if (Array.isArray(parsed.handouts) && parsed.handouts.length > handouts.length) {
               handouts = parsed.handouts.filter(function (h) { return h && h.url; });
             }
+            if (parsed.hide_zoom !== undefined) {
+              hideZoom = !!parsed.hide_zoom;
+            }
           } catch (e) {}
         }
       }
@@ -2027,9 +2031,17 @@
         if (Array.isArray(conf.handouts) && conf.handouts.length > handouts.length) {
           handouts = conf.handouts.filter(function (h) { return h && h.url; });
         }
+        if (conf.hide_zoom !== undefined) {
+          hideZoom = !!conf.hide_zoom;
+        }
       }
 
-      // 5. Fallback legacy single fields
+      // 5. Instruction note flag
+      if (!hideZoom && talk.zoom_instructions && talk.zoom_instructions.indexOf('[HIDE_ZOOM]') !== -1) {
+        hideZoom = true;
+      }
+
+      // 6. Fallback legacy single fields
       if (papers.length === 0 && talk.paper_url) {
         papers.push({ title: talk.paper_title || talk.reading_title || 'Research Paper', url: talk.paper_url });
       }
@@ -2044,7 +2056,8 @@
         }
       }
 
-      return { papers: papers, handouts: handouts };
+      talk.hide_zoom = hideZoom;
+      return { papers: papers, handouts: handouts, hide_zoom: hideZoom };
     }
 
     // Dynamic Document Rows (Multiple Papers & Handouts with [+] buttons)
@@ -2239,7 +2252,8 @@
       document.getElementById('edit-zoom-instructions').value = talk.zoom_instructions || '';
       document.getElementById('edit-has-abstract').checked = !!talk.has_abstract;
       document.getElementById('edit-has-register').checked = !!talk.has_register;
-      document.getElementById('edit-hide-zoom').checked = !!talk.hide_zoom;
+      document.getElementById('edit-hide-zoom').checked = !!docs.hide_zoom || !!talk.hide_zoom;
+      document.getElementById('edit-zoom-instructions').value = (talk.zoom_instructions || '').replace('[HIDE_ZOOM]', '').trim();
 
       talkModal.classList.add('open');
       document.body.style.overflow = 'hidden';
@@ -2493,7 +2507,8 @@
       allTalks.forEach(function (t) {
         if (t && t.id && !t.id.startsWith('config-')) {
           var d = extractTalkDocs(t);
-          if (d.papers.length > 0 || d.handouts.length > 0) {
+          if (d.papers.length > 0 || d.handouts.length > 0 || t.hide_zoom || d.hide_zoom) {
+            d.hide_zoom = !!(t.hide_zoom || d.hide_zoom);
             docsMap[t.id] = d;
           }
         }
@@ -2544,10 +2559,16 @@
       var hasReg = document.getElementById('edit-has-register').checked;
       var hideZoom = document.getElementById('edit-hide-zoom') ? document.getElementById('edit-hide-zoom').checked : false;
 
-      // Failproof document persistence: embed payload inside abstract so Supabase ALWAYS saves all files
+      if (hideZoom && zoomInstructions.indexOf('[HIDE_ZOOM]') === -1) {
+        zoomInstructions = (zoomInstructions ? (zoomInstructions + ' ') : '') + '[HIDE_ZOOM]';
+      } else if (!hideZoom && zoomInstructions.indexOf('[HIDE_ZOOM]') !== -1) {
+        zoomInstructions = zoomInstructions.replace('[HIDE_ZOOM]', '').trim();
+      }
+
+      // Failproof persistence: embed payload inside abstract so Supabase ALWAYS saves all files and zoom setting
       var cleanAbs = cleanAbstract(abstract);
-      var docsPayload = JSON.stringify({ papers: papersList, handouts: handoutsList });
-      var absWithDocs = cleanAbs + ((papersList.length > 0 || handoutsList.length > 0) ? ('\n<!--MINDSCAPES_DOCS:' + docsPayload + '-->') : '');
+      var docsPayload = JSON.stringify({ papers: papersList, handouts: handoutsList, hide_zoom: hideZoom });
+      var absWithDocs = cleanAbs + ((papersList.length > 0 || handoutsList.length > 0 || hideZoom) ? ('\n<!--MINDSCAPES_DOCS:' + docsPayload + '-->') : '');
 
       var talkData = {
         id: talkId,
@@ -2912,6 +2933,7 @@
           var docs = extractTalkDocs(remoteTalk, docsConfigMap);
           remoteTalk.papers = docs.papers;
           remoteTalk.handouts = docs.handouts;
+          remoteTalk.hide_zoom = docs.hide_zoom;
           remoteTalk.papers_json = JSON.stringify(docs.papers);
           remoteTalk.handouts_json = JSON.stringify(docs.handouts);
           return remoteTalk;
